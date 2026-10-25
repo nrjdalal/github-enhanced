@@ -68,7 +68,7 @@
       a.removeAttribute("id")
       a.removeAttribute("aria-current")
       a.setAttribute("href", href)
-      li.querySelector(".ActionListItem-label").textContent = [].concat(label)[0]
+      li.querySelector(".ActionListItem-label").textContent = label
       li.querySelector("svg")?.replaceWith(avatar(linkOwner(href)))
       list.append(li)
     }
