@@ -350,3 +350,24 @@ relative-time[data-ujc-text]:not(:defined)::before {
   content: attr(data-ujc-text);
   font-size: var(--ujc-size);
 }
+
+[data-ujc-copy] {
+  margin-left: 8px;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--fgColor-muted);
+  line-height: 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+[data-ujc-copy]:hover {
+  background: var(--control-transparent-bgColor-hover);
+  color: var(--fgColor-default);
+}
+
+[data-ujc-copy] .octicon-check {
+  color: var(--fgColor-success);
+}

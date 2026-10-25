@@ -28,6 +28,10 @@ The "All pull requests" heading becomes three icon tabs with GitHub-style toolti
 
 <img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
+### Copy a run's URL
+
+An Actions run or job page gets a copy button after its title's number, which copies the page's URL and shows a check for two seconds.
+
 ### Recent pushes
 
 The "had recent pushes" banner with its Compare & pull request button shows only for a branch you would merge into another one. It stays hidden for canary, dev, develop, main, master, prod, production and staging.
