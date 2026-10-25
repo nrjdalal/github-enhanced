@@ -280,6 +280,12 @@ html[data-ujc-shown] .news > include-fragment {
   vertical-align: 1px;
 }
 
+h1 [data-ujc-type] {
+  font-size: 0.5em;
+  line-height: 1.5;
+  vertical-align: 0.3em;
+}
+
 [data-ujc-type=""] {
   border-color: var(--borderColor-default);
   color: var(--fgColor-muted);
