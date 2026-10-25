@@ -248,18 +248,18 @@ aside ul:has(> li[data-ujc-active]) > li[data-active]:not([data-ujc-active]) [cl
   transition: none !important;
 }
 
-html[data-ujc-shown] .feed-main__universe {
+html[data-ujc-shown] .feed-main__universe:not(:has([partial-name].loaded)) {
   border: 0 !important;
   border-radius: 0 !important;
   justify-content: normal !important;
   align-items: normal !important;
 }
 
-html[data-ujc-shown] .feed-main__universe main {
+html[data-ujc-shown] .feed-main__universe:not(:has([partial-name].loaded)) main {
   display: block !important;
 }
 
-html[data-ujc-shown] .feed-main__universe .feed-main__universe--spinner {
+html[data-ujc-shown] .feed-main__universe:not(:has([partial-name].loaded)) .feed-main__universe--spinner {
   display: none !important;
 }
 

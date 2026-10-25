@@ -38,7 +38,7 @@
       const box = event.target
       if (!(box instanceof HTMLTextAreaElement)) return
       if (event.key === "Escape") return escaped.add(box)
-      if (event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey || escaped.has(box) || box.getAttribute("aria-expanded") === "true") return
+      if (event.key !== "Tab" || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || escaped.has(box) || box.getAttribute("aria-expanded") === "true") return
       event.preventDefault()
       const { selectionStart, selectionEnd, value } = box
       const start = value.lastIndexOf("\n", selectionStart - 1) + 1
@@ -146,8 +146,15 @@
   const repoRows = (el) => [...el.querySelectorAll("li[data-component='ActionList.Item']")].filter((li) => li.querySelector(":scope > a[href]"))
   const reactRoot = (name) => document.querySelector(`react-partial[partial-name='${name}'] [data-target='react-partial.reactRoot']`)
   const CACHE = "ujc-dashboard-"
+  const login = () => document.querySelector("meta[name='user-login']")?.content
+  const cached = (key) => {
+    try {
+      const entry = JSON.parse(localStorage.getItem(CACHE + key))
+      if (entry.login === login() && Date.now() - entry.savedAt < 7 * 864e5) return entry.html
+    } catch {}
+  }
   const REGIONS = [
-    ["copilot", () => reactRoot("copilot-chat-input-partial"), (root) => root.querySelector("textarea") && (root.querySelector("[class*='menuButton']") || !localStorage.getItem(CACHE + "copilot")?.includes("menuButton"))],
+    ["copilot", () => reactRoot("copilot-chat-input-partial"), (root) => root.querySelector("textarea") && (root.querySelector("[class*='menuButton']") || !cached("copilot")?.includes("menuButton"))],
     ["lists", () => reactRoot("dashboard-lists"), (root) => root.querySelector("li a[href]") && !root.querySelector(SKELETON)],
     ["repositories", () => reactRoot("dashboard-repositories"), (root) => repoRows(root).length],
     ["changelog", () => document.querySelector("aside.feed-right-column"), (root) => !root.querySelector("include-fragment") && root.querySelector(".dashboard-changelog a")],
@@ -198,7 +205,7 @@
       const live = root.closest("react-partial") ?? root
       const node = document.querySelector(`[data-ujc-cache='${key}']`)
       if (!ready(root)) {
-        const html = localStorage.getItem(CACHE + key)
+        const html = cached(key)
         if (node || saved.has(key) || !html) continue
         const copy = document.createElement(live.tagName === "ASIDE" ? "aside" : "div")
         copy.className = live.className
@@ -210,7 +217,9 @@
         live.setAttribute("data-ujc-loading", "")
         document.documentElement.setAttribute("data-ujc-shown", "")
         progress(false)
-        addEventListener("load", () => setTimeout(() => copy.isConnected && swap(copy, live), 5000))
+        const fallback = () => setTimeout(() => copy.isConnected && swap(copy, live), 5000)
+        if (document.readyState === "complete") fallback()
+        else addEventListener("load", fallback, { once: true })
         continue
       }
       saved.add(key)
@@ -220,13 +229,21 @@
 
   const snapshot = () => {
     if (location.pathname !== "/") return
+    const user = login()
     for (const [key, find, ready] of REGIONS) {
+      if (!user) {
+        localStorage.removeItem(CACHE + key)
+        continue
+      }
       const root = find()
       if (!root || !ready(root) || document.querySelector(`[data-ujc-cache='${key}']`)) continue
       const copy = root.cloneNode(true)
       const shown = [...root.querySelectorAll("relative-time")].map((el) => el.shadowRoot?.textContent || el.textContent)
       copy.querySelectorAll("relative-time").forEach((el, i) => el.replaceWith(shown[i]))
-      localStorage.setItem(CACHE + key, copy.innerHTML)
+      if (copy.innerHTML.length > 2e5) continue
+      try {
+        localStorage.setItem(CACHE + key, JSON.stringify({ login: user, savedAt: Date.now(), html: copy.innerHTML }))
+      } catch {}
     }
   }
   addEventListener("pagehide", snapshot)
@@ -381,9 +398,10 @@
     const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT, { acceptNode: (node) => (node.parentElement.closest("[data-ujc-type]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) })
     const text = walker.nextNode()
     const [prefix, type, scope, breaking] = text?.nodeValue.match(TYPE) ?? []
-    if (!prefix || !TYPES.has(type)) return
+    const shown = title.querySelector("[data-ujc-type]")
+    if (!prefix || !TYPES.has(type) || (shown && shown.getAttribute("data-ujc-type") !== type)) return
     text.nodeValue = text.nodeValue.slice(prefix.length)
-    if (title.querySelector("[data-ujc-type]")) return
+    if (shown) return
     const label = document.createElement("span")
     label.setAttribute("data-ujc-type", type)
     label.textContent = type + (breaking ?? "")
@@ -404,7 +422,7 @@
       covers.delete(title)
       title.removeAttribute("data-ujc-covered")
     }
-    for (const title of document.querySelectorAll("h4:has(a[href*='/commit/'], a[href*='/changes/'])")) {
+    for (const title of document.querySelectorAll("h4:has(a[href*='/commit/'], a[href*='/commits/'], a[href*='/changes/'])")) {
       if (title.hasAttribute("data-ujc-cover")) continue
       if (hydrated(title)) {
         typeLabel(title)
@@ -498,8 +516,9 @@
       const org = await fetch(`/orgs/${owner}/repositories`, { method: "HEAD" }).then((res) => res.ok, () => undefined)
       if (org !== undefined) orgs[owner] = org
     }
-    if (!unknown.some((owner) => orgs[owner])) return
+    if (!unknown.length) return
     localStorage.setItem(ORGS, JSON.stringify(orgs))
+    if (!unknown.some((owner) => orgs[owner])) return
     for (const node of document.querySelectorAll("[data-ujc-sections]")) node.remove()
     schedule()
   }
