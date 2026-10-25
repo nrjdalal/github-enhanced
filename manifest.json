@@ -3,19 +3,38 @@
   "name": "github-enhanced",
   "version": "0.1.0",
   "description": "Flash-free tweaks for github.com",
-  "permissions": ["storage"],
-  "action": { "default_popup": "settings.html" },
-  "options_ui": { "page": "settings.html" },
+  "permissions": [
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "settings.html"
+  },
+  "options_ui": {
+    "page": "settings.html"
+  },
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
-      "js": ["bridge.js"],
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://github.com/*"],
-      "js": ["github.js"],
-      "css": ["github.css"],
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "github.js"
+      ],
+      "css": [
+        "github.css"
+      ],
       "run_at": "document_start",
       "world": "MAIN"
     }

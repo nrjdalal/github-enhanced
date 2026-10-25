@@ -13,7 +13,7 @@
   const CONFIG = "github-enhanced-config"
   let config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
   const reserveNav = () => {
-    const rows = Math.ceil((config.nav ?? []).length / 2)
+    const rows = Math.ceil(Object.keys(config.links ?? {}).length / 2)
     if (rows) document.documentElement.style.setProperty("--ujc-nav-rows", rows)
     else document.documentElement.style.removeProperty("--ujc-nav-rows")
   }
@@ -28,7 +28,7 @@
       const head = document.createElement("h2")
       head.textContent = "Bookmarks"
       const list = document.createElement("ul")
-      for (const [name, repo] of config.bookmarks ?? []) {
+      for (const [repo, name] of Object.entries(config.bookmarks ?? {})) {
         const li = document.createElement("li")
         const a = document.createElement("a")
         a.href = `/${repo}`
@@ -52,7 +52,7 @@
     if (!list || ![...list.querySelectorAll("a")].some((a) => a.textContent.trim() === "Feed")) return
     const template = [...list.children].find((li) => !li.hasAttribute("data-ujc-extra") && !li.classList.contains("ActionListItem--navActive"))
     if (!template?.querySelector(".ActionListItem-label")?.textContent.trim() || list.querySelector("[data-ujc-extra]")) return
-    for (const [label, href, iconName] of config.nav ?? []) {
+    for (const [href, [label, iconName]] of Object.entries(config.links ?? {})) {
       const li = template.cloneNode(true)
       li.setAttribute("data-ujc-extra", "")
       li.removeAttribute("data-item-id")
@@ -218,7 +218,7 @@
 
   const cacheAvatars = async () => {
     const next = {}
-    for (const owner of new Set((config.bookmarks ?? []).map(([, repo]) => repo.split("/")[0]))) {
+    for (const owner of new Set(Object.keys(config.bookmarks ?? {}).map((repo) => repo.split("/")[0]))) {
       const url = (await toDataUrl(avatarUrl(owner))) ?? avatars[owner]
       if (url) next[owner] = url
     }

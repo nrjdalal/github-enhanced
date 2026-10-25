@@ -7,3 +7,4 @@ const sync = (config) => {
 }
 chrome.storage.sync.get("config", ({ config }) => sync(config))
 chrome.storage.onChanged.addListener((changes) => changes.config && sync(changes.config.newValue))
+chrome.runtime.sendMessage("check-update")

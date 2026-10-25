@@ -38,14 +38,29 @@ It works in Chrome and other Chromium browsers, such as Helium, Arc, Brave and E
 
 ## Settings
 
-Click the extension's toolbar button, or its **Options**, to set your bookmarks and the links under Home and Feed. Open github.com tabs update as soon as you save.
+Click the extension's toolbar button, or its **Options**, to edit its config, one JSON object. Open github.com tabs update as soon as you save.
 
-<img src="assets/settings.png" alt="Settings with a Bookmarks list and a Links list, one entry per line" width="452">
+<img src="assets/settings.png" alt="Settings with the config as JSON: bookmarks and links" width="512">
 
-- **Bookmarks:** one per line, `Name | owner/repo`.
-- **Links under Home and Feed:** one per line, `Label | URL | book`, or `book-locked` for the locked book icon.
+```json
+{
+  "bookmarks": {
+    "nrjdalal/zerostarter": "ZeroStarter"
+  },
+  "links": {
+    "https://github.com/octocat?tab=repositories": ["Octocat", "book"]
+  }
+}
+```
 
-Settings sync through your browser profile. Bookmark avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
+- `bookmarks` maps `owner/repo` to the name shown in Bookmarks, in order.
+- `links` maps a URL to a row under Home and Feed as `[label, icon]`, the icon `book` or `book-locked`.
+
+The config syncs through your browser profile. Bookmark avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
+
+## Updates
+
+With **Developer mode** on, the extension reloads itself once its folder changes, so `git pull` is all an update takes; the next github.com page load picks it up.
 
 ## License
 
