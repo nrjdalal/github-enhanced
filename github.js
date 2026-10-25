@@ -118,13 +118,13 @@
   const SKELETON = "[class*='keleton'], [aria-busy='true']"
   const repoRows = (el) => [...el.querySelectorAll("li[data-component='ActionList.Item']")].filter((li) => li.querySelector(":scope > a[href]"))
   const reactRoot = (name) => document.querySelector(`react-partial[partial-name='${name}'] [data-target='react-partial.reactRoot']`)
+  const CACHE = "ujc-dashboard-"
   const REGIONS = [
-    ["copilot", () => reactRoot("copilot-chat-input-partial"), (root) => root.querySelector("textarea")],
+    ["copilot", () => reactRoot("copilot-chat-input-partial"), (root) => root.querySelector("textarea") && (root.querySelector("[class*='menuButton']") || !localStorage.getItem(CACHE + "copilot")?.includes("menuButton"))],
     ["lists", () => reactRoot("dashboard-lists"), (root) => root.querySelector("li a[href]") && !root.querySelector(SKELETON)],
     ["repositories", () => reactRoot("dashboard-repositories"), (root) => repoRows(root).length],
     ["changelog", () => document.querySelector("aside.feed-right-column"), (root) => !root.querySelector("include-fragment") && root.querySelector(".dashboard-changelog a")],
   ]
-  const CACHE = "ujc-dashboard-"
   const saved = new Set()
   const rows = (el) => [...el.querySelectorAll("li")].filter((li) => !li.querySelector("li") && li.querySelector("a[href]"))
   const rowKey = (li) => li.querySelector("a[href]").getAttribute("href")
@@ -185,13 +185,24 @@
         addEventListener("load", () => setTimeout(() => copy.isConnected && swap(copy, live), 5000))
         continue
       }
-      if (!saved.has(key)) {
-        saved.add(key)
-        localStorage.setItem(CACHE + key, root.innerHTML)
-      }
+      saved.add(key)
       if (node) swap(node, live)
     }
   }
+
+  const snapshot = () => {
+    if (location.pathname !== "/") return
+    for (const [key, find, ready] of REGIONS) {
+      const root = find()
+      if (!root || !ready(root) || document.querySelector(`[data-ujc-cache='${key}']`)) continue
+      const copy = root.cloneNode(true)
+      const shown = [...root.querySelectorAll("relative-time")].map((el) => el.shadowRoot?.textContent || el.textContent)
+      copy.querySelectorAll("relative-time").forEach((el, i) => el.replaceWith(shown[i]))
+      localStorage.setItem(CACHE + key, copy.innerHTML)
+    }
+  }
+  addEventListener("pagehide", snapshot)
+  addEventListener("visibilitychange", () => document.visibilityState === "hidden" && snapshot())
 
   const terms = (q) => (q ?? "").trim().split(/\s+/).filter((term) => term && !term.startsWith("sort:")).sort().join(" ")
   const DEFAULT_PR_QUERIES = ["", terms("is:pr state:open"), terms("is:pr is:open")]
