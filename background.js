@@ -1,4 +1,4 @@
-// An unpacked install reloads itself once its files change on disk, so a git pull in its folder is all an update takes; the files read at install or reload are the baseline. Each install or reload also rewrites a link kept as [label, icon], the old shape, to its label.
+// An unpacked install reloads itself once its files change on disk, so a git pull in its folder is all an update takes; the files read at install or reload are the baseline. Each install or reload also rewrites a config in the old bookmarks and links shape to pullRequests and allRepositories.
 const FILES = ["manifest.json", "background.js", "bridge.js", "github.js", "github.css", "settings.html", "settings.js"]
 const read = () => Promise.all(FILES.map((file) => fetch(chrome.runtime.getURL(file)).then((res) => res.text()))).then((texts) => texts.join("\0"))
 
@@ -7,12 +7,14 @@ chrome.runtime.onInstalled.addListener(async () => {
   ready = read().then((files) => chrome.storage.local.set({ files }))
   const { config } = await chrome.storage.sync.get("config")
   if (typeof config !== "string") return
-  const parsed = JSON.parse(config)
-  const links = Object.entries(parsed.links ?? {})
-  if (!links.some(([, value]) => Array.isArray(value))) return
-  parsed.links = Object.fromEntries(links.map(([href, value]) => [href, [].concat(value)[0]]))
+  const { bookmarks, links, ...rest } = JSON.parse(config)
+  if (!bookmarks && !links) return
+  const owner = (href) => {
+    const [first, second] = new URL(href, "https://github.com").pathname.split("/").filter(Boolean)
+    return first === "orgs" ? second : first
+  }
   await chrome.storage.sync.remove("text")
-  await chrome.storage.sync.set({ config: JSON.stringify(parsed) })
+  await chrome.storage.sync.set({ config: JSON.stringify({ pullRequests: Object.keys(bookmarks ?? {}), allRepositories: Object.keys(links ?? {}).map(owner), ...rest }) })
 })
 
 chrome.runtime.onMessage.addListener((message) => {

@@ -1,4 +1,4 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds All Repositories (the links set in the extension popup, each with its user's or org's avatar) and Pull Requests (each bookmarked repo's pull requests) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, and opens a repo's pull request lists sorted by last update unless the search names a sort.
+// Puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, and opens a repo's pull request lists sorted by last update unless the search names a sort.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -32,10 +32,8 @@
   const AVATARS = "ujc-avatars"
   const avatarUrl = (owner) => `https://github.com/${owner}.png?size=32`
   const avatars = JSON.parse(localStorage.getItem(AVATARS) ?? "{}")
-  const linkOwner = (href) => {
-    const [first, second] = new URL(href, location.origin).pathname.split("/").filter(Boolean)
-    return first === "orgs" ? second : first
-  }
+  const ORGS = "ujc-orgs"
+  const orgs = JSON.parse(localStorage.getItem(ORGS) ?? "{}")
   const avatar = (owner) => {
     const img = document.createElement("img")
     img.src = avatars[owner] ?? avatarUrl(owner)
@@ -49,9 +47,9 @@
   const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
       if (partial.previousElementSibling?.hasAttribute("data-ujc-sections")) continue
-      const all = Object.entries(config.links ?? {}).map(([href, label]) => [href, label, linkOwner(href)])
-      const pulls = Object.entries(config.bookmarks ?? {}).map(([repo, label]) => [`/${repo}/pulls`, label, repo.split("/")[0]])
-      for (const [title, rows] of [["All Repositories", all], ["Pull Requests", pulls]]) {
+      const pulls = (config.pullRequests ?? []).map((repo) => [`/${repo}/pulls`, repo.split("/")[1], repo.split("/")[0]])
+      const all = (config.allRepositories ?? []).map((owner) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, owner, owner])
+      for (const [title, rows] of [["Pull Requests", pulls], ["All Repositories", all]]) {
         if (!rows.length) continue
         const box = document.createElement("div")
         box.setAttribute("data-ujc-sections", "")
@@ -226,12 +224,21 @@
 
   const cacheAvatars = async () => {
     const next = {}
-    const owners = [...Object.keys(config.bookmarks ?? {}).map((repo) => repo.split("/")[0]), ...Object.keys(config.links ?? {}).map(linkOwner)]
+    const owners = [...(config.pullRequests ?? []).map((repo) => repo.split("/")[0]), ...(config.allRepositories ?? [])]
     for (const owner of new Set(owners.filter(Boolean))) {
       const url = (await toDataUrl(avatarUrl(owner))) ?? avatars[owner]
       if (url) next[owner] = url
     }
     localStorage.setItem(AVATARS, JSON.stringify(next))
+    const unknown = (config.allRepositories ?? []).filter((owner) => !(owner in orgs))
+    for (const owner of unknown) {
+      const org = await fetch(`/orgs/${owner}/repositories`, { method: "HEAD" }).then((res) => res.ok, () => undefined)
+      if (org !== undefined) orgs[owner] = org
+    }
+    if (!unknown.some((owner) => orgs[owner])) return
+    localStorage.setItem(ORGS, JSON.stringify(orgs))
+    for (const node of document.querySelectorAll("[data-ujc-sections]")) node.remove()
+    schedule()
   }
 
   if (location.pathname === "/") addEventListener("load", () => requestIdleCallback(cacheAvatars))

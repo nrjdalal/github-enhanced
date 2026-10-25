@@ -1,14 +1,14 @@
 const field = document.getElementById("config")
 const status = document.getElementById("status")
 const TEMPLATE = `{
-  "bookmarks": {
-    // "owner/repo": "Name",
-    // "nrjdalal/zerostarter": "ZeroStarter"
-  },
-  "links": {
-    // "URL": "Label", shown with the avatar of the user or org in the URL
-    // "https://github.com/octocat?tab=repositories": "Octocat"
-  }
+  "pullRequests": [
+    // "owner/repo",
+    // "nrjdalal/zerostarter"
+  ],
+  "allRepositories": [
+    // "user or org",
+    // "octocat"
+  ]
 }`
 
 const parse = (text) => {
