@@ -36,7 +36,7 @@ A time from the last 36 hours stays relative, such as "just now", "3 minutes ago
 
 ### Commit types
 
-In a repo's commit list, a pull request's Commits tab, pull request lists and a pull request's own heading, a title that starts with a [Conventional Commits](https://www.conventionalcommits.org) type shows the type as a colored label and its scope as a gray outline: `fix(scripts): clean records` reads as **fix** (scripts) clean records. The types are build, chore, ci, docs, feat, fix, perf, refactor, revert, style and test; a `!` for a breaking change stays on the label. Any other title is left as it is.
+In a repo's commit list, a pull request's Commits tab, pull request lists and a pull request's own heading, a title that starts with a [Conventional Commits](https://www.conventionalcommits.org) type shows the type as a colored label and its scope as a gray outline: `fix(scripts): clean records` reads as **fix** (scripts) clean records. The types are build, chore, ci, docs, feat, fix, perf, refactor, revert, style and test; a `!` for a breaking change stays on the label. A title that starts with a ticket key, such as `PLAT-2660: allow next-day viewings`, shows the key as a gray outline the same way. Labels are in place from the first paint, so titles do not shift when the page finishes loading. Any other title is left as it is.
 
 <img src="assets/commit-types.png" alt="Commit list with ci, fix, refactor, feat and build labels and gray scope outlines before each title" width="830">
 

@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope as an outline in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -429,18 +429,24 @@
 
   const TYPES = new Set(["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test"])
   const TYPE = /^(\w+)(?:\(([^)]+)\))?(!)?:\s+/
+  const TICKET = /^()([A-Z][A-Z0-9]*-\d+)():\s+/
+  const titleText = (title) => {
+    const text = document.createTreeWalker(title, NodeFilter.SHOW_TEXT, { acceptNode: (node) => (node.parentElement.closest("[data-ujc-type]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) }).nextNode()
+    return [text, ...(text?.nodeValue.match(TYPE) ?? text?.nodeValue.match(TICKET) ?? [])]
+  }
   const typeLabel = (title) => {
-    const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT, { acceptNode: (node) => (node.parentElement.closest("[data-ujc-type]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) })
-    const text = walker.nextNode()
-    const [prefix, type, scope, breaking] = text?.nodeValue.match(TYPE) ?? []
+    const [text, prefix, type, scope, breaking] = titleText(title)
     const shown = title.querySelector("[data-ujc-type]")
-    if (!prefix || !TYPES.has(type) || (shown && shown.getAttribute("data-ujc-type") !== type)) return
+    if (!prefix || (type && !TYPES.has(type)) || (shown && shown.getAttribute("data-ujc-type") !== type)) return
     text.nodeValue = text.nodeValue.slice(prefix.length)
     if (shown) return
-    const label = document.createElement("span")
-    label.setAttribute("data-ujc-type", type)
-    label.textContent = type + (breaking ?? "")
-    const labels = [label]
+    const labels = []
+    if (type) {
+      const label = document.createElement("span")
+      label.setAttribute("data-ujc-type", type)
+      label.textContent = type + (breaking ?? "")
+      labels.push(label)
+    }
     if (scope) {
       const outline = document.createElement("span")
       outline.setAttribute("data-ujc-type", "")
@@ -451,16 +457,19 @@
   }
   const TITLES = [
     "h4:has(a[href*='/commit/'], a[href*='/commits/'], a[href*='/changes/'])",
-    "h3:has(> a[data-testid='listitem-title-link'][data-hovercard-type='pull_request'])",
+    "h3:has(> a[data-testid='listitem-title-link'][href*='/pull/'])",
     "h1 > .markdown-title",
   ].join(", ")
   const covers = new Map()
+  let anchors = 0
   const commitTypes = () => {
     for (const [title, cover] of covers) {
       if (title.isConnected && !hydrated(title)) continue
       cover.remove()
       covers.delete(title)
       title.removeAttribute("data-ujc-covered")
+      title.style.removeProperty("anchor-name")
+      title.style.removeProperty("margin-inline-start")
     }
     for (const title of document.querySelectorAll(TITLES)) {
       if (title.hasAttribute("data-ujc-cover")) continue
@@ -468,19 +477,36 @@
         typeLabel(title)
         continue
       }
-      let cover = covers.get(title)
-      if (!cover) {
-        cover = title.cloneNode(true)
-        cover.setAttribute("data-ujc-cover", "")
-        typeLabel(cover)
-        covers.set(title, cover)
-        title.setAttribute("data-ujc-covered", "")
+      pending = true
+      if (covers.has(title)) {
+        fit(title, covers.get(title))
+        continue
       }
-      const { top, left, width } = title.getBoundingClientRect()
+      const cover = title.cloneNode(true)
+      const anchor = `--ujc-cover-${++anchors}`
       const { font, color } = getComputedStyle(title)
-      overlay(cover, top, left)
-      Object.assign(cover.style, { width: `${width}px`, font, color })
+      cover.setAttribute("data-ujc-cover", "")
+      typeLabel(cover)
+      title.style.setProperty("anchor-name", anchor)
+      cover.style.cssText = `position: absolute; position-anchor: ${anchor}; position-visibility: always; top: anchor(top); left: anchor(left); width: anchor-size(width); margin: 0`
+      Object.assign(cover.style, { font, color })
+      document.body.append(cover)
+      covers.set(title, cover)
+      title.setAttribute("data-ujc-covered", "")
+      fit(title, cover)
     }
+  }
+  const fit = (title, cover) => {
+    const [text, prefix] = titleText(title)
+    const labels = [...cover.querySelectorAll("[data-ujc-type]")]
+    if (!prefix || !labels.length) return
+    const range = document.createRange()
+    range.setStart(text, 0)
+    range.setEnd(text, prefix.length)
+    const width = labels.reduce((sum, label) => sum + label.getBoundingClientRect().width + parseFloat(getComputedStyle(label).marginRight), 0)
+    const shift = width - range.getBoundingClientRect().width
+    title.style.setProperty("margin-inline-start", `${shift}px`)
+    cover.style.setProperty("margin-inline-start", `${-shift}px`)
   }
 
   const DATE = { format: "datetime", weekday: "", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", prefix: "" }
