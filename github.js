@@ -1,4 +1,4 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title.
+// Puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, and fills Squash and merge's commit title with the pull request's title and number.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -203,6 +203,18 @@
     }
   }
 
+  const titled = new WeakSet()
+  const squashTitle = () => {
+    const confirm = [...document.querySelectorAll("button")].find((button) => button.textContent.trim() === "Confirm squash and merge")
+    const label = confirm && [...document.querySelectorAll("label")].find((label) => label.textContent.trim() === "Commit message")
+    const input = label && document.getElementById(label.htmlFor)
+    const [, title, number] = document.title.match(/^(.*) by \S+ · Pull Request #(\d+) · /) ?? []
+    if (!input || !title || titled.has(input)) return
+    titled.add(input)
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, `${title} (#${number})`)
+    input.dispatchEvent(new Event("input", { bubbles: true }))
+  }
+
   const linkAvatar = () => {
     for (const img of document.querySelectorAll("img.avatar")) {
       if (img.closest("a") || !img.parentElement.querySelector("select-panel[id^='switch_dashboard_context']")) continue
@@ -219,7 +231,10 @@
       linkAvatar()
       sections()
     }
-    if (/^\/[^/]+\/[^/]+\/pull\/\d+/.test(location.pathname)) emptySidebar()
+    if (/^\/[^/]+\/[^/]+\/pull\/\d+/.test(location.pathname)) {
+      emptySidebar()
+      squashTitle()
+    }
     pending = false
     prTabs()
     document.documentElement.toggleAttribute("data-ujc-pending", pending)

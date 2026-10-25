@@ -34,6 +34,12 @@ A box with nothing in it shows only its title: "No reviews", "No one assigned", 
 
 <img src="assets/pr-sidebar.png" alt="A pull request's sidebar before, with an empty line under Reviewers, Assignees, Labels, Projects and Milestone, and after, with only their titles" width="680">
 
+### Squash and merge title
+
+Squash and merge fills its commit title with the pull request's title and number, as GitHub already does for a pull request of two or more commits; for one commit, GitHub would use that commit's message. Edit it before you confirm and your edit stays.
+
+<img src="assets/squash-title.png" alt="Squash and merge form with the commit message set to the pull request title and number" width="560">
+
 ## Install
 
 1. Clone or download this repo.
