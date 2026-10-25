@@ -2,10 +2,29 @@
 
 Small, flash-free tweaks to github.com, run through the [User JavaScript and CSS](https://chromewebstore.google.com/detail/user-javascript-and-css/nbhcbdghjpllgmfilhnhkllmkecfmpld) browser extension.
 
-- **Dashboard sidebar:** Home and Feed side by side, your own links under them, and a Bookmarks section above "Top repositories".
-- **Navbar:** the GitHub mark becomes a home button styled like the menu button.
-- **Repo tabs:** Code, Actions, Issues and Pull requests stay in the bar; the rest move under More at every width.
-- **Pull requests page:** the "All pull requests" heading becomes three icon tabs, Pull requests, Authored by me and Merged by me, with GitHub-style tooltips, and Merged by me joins the page's sidebar under Authored by me. They read your username from the page, so they show only when you are signed in.
+### Dashboard sidebar
+
+Home and Feed side by side, your own links under them, and a Bookmarks section above "Top repositories".
+
+<img src="assets/dashboard.png" alt="Dashboard sidebar with Home and Feed side by side, two custom links and three bookmarks" width="330">
+
+### Navbar
+
+The GitHub mark becomes a home button styled like the menu button.
+
+<img src="assets/navbar.png" alt="Navbar with the menu button and a home button side by side" width="440">
+
+### Repo tabs
+
+Code, Actions, Issues and Pull requests stay in the bar; the rest move under More at every width.
+
+![Repo tab bar with Code, Actions, Issues and Pull requests, and More on the right](assets/repo-tabs.png)
+
+### Pull requests page
+
+The "All pull requests" heading becomes three icon tabs, Pull requests, Authored by me and Merged by me, with GitHub-style tooltips, and Merged by me joins the page's sidebar under Authored by me. They read your username from the page, so they show only when you are signed in.
+
+<img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
 Everything changes as the page parses, before its first paint, so nothing flashes or shifts.
 
