@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -114,13 +114,15 @@
   repoTabs()
   const hydrated = (el) => Object.keys(el).some((key) => key.startsWith("__reactFiber$"))
 
+  const sidebarRows = () => [
+    ["Pull Requests", entries(config.sidebar?.pullRequests).map(([repo, label]) => [`/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])],
+    ["All Repositories", entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])],
+  ].filter(([, rows]) => rows.length)
+
   const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
       if (partial.previousElementSibling?.hasAttribute("data-ujc-sections")) continue
-      const pulls = entries(config.sidebar?.pullRequests).map(([repo, label]) => [`/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])
-      const all = entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])
-      for (const [title, rows] of [["Pull Requests", pulls], ["All Repositories", all]]) {
-        if (!rows.length) continue
+      for (const [title, rows] of sidebarRows()) {
         const box = document.createElement("div")
         box.setAttribute("data-ujc-sections", "")
         const head = document.createElement("h2")
@@ -140,6 +142,39 @@
         partial.before(box)
       }
     }
+  }
+
+  const drawerSections = () => {
+    const heading = [...document.querySelectorAll("[role='dialog'] h3")].find((h3) => h3.firstElementChild?.textContent === "Top repositories")
+    const top = heading?.closest("li[data-component='ActionList.Group']")
+    const item = top?.querySelector("ul > li")
+    if (!item || top.previousElementSibling?.hasAttribute("data-ujc-drawer")) return
+    for (const [title, rows] of sidebarRows()) {
+      const group = top.cloneNode(false)
+      group.setAttribute("data-ujc-drawer", "")
+      const head = top.firstElementChild.cloneNode(true)
+      head.querySelector("h3").removeAttribute("id")
+      head.querySelector("h3").replaceChildren(Object.assign(document.createElement("div"), { textContent: title }))
+      const list = top.querySelector("ul").cloneNode(false)
+      list.removeAttribute("aria-labelledby")
+      for (const [href, text, owner] of rows) {
+        const li = item.cloneNode(true)
+        const a = li.querySelector("a")
+        a.href = href
+        for (const attr of ["id", "aria-labelledby", "data-discover"]) a.removeAttribute(attr)
+        const label = li.querySelector("[data-component='ActionList.Item.Label']")
+        label.removeAttribute("id")
+        label.textContent = text
+        const img = li.querySelector("img")
+        if (img) img.src = avatars[owner] ?? avatarUrl(owner)
+        list.append(li)
+      }
+      group.append(head, list)
+      top.before(group)
+    }
+    const divider = top.previousElementSibling?.hasAttribute("data-ujc-drawer") && [...top.parentElement.children].find((li) => li.getAttribute("data-component") === "ActionList.Divider")
+    if (divider) top.before(Object.assign(divider.cloneNode(true), { className: divider.className }))
+    top.previousElementSibling?.setAttribute("data-ujc-drawer", "")
   }
 
   const SKELETON = "[class*='keleton'], [aria-busy='true']"
@@ -476,6 +511,7 @@
     absoluteDates()
     if (/^\/[^/]+\/[^/]+\/(commits|pull\/\d+\/commits)(\/|$)/.test(location.pathname)) commitTypes()
     prTabs()
+    drawerSections()
     document.documentElement.toggleAttribute("data-ujc-pending", pending)
     if (pending) schedule()
   }
@@ -528,7 +564,7 @@
   document.addEventListener("github-enhanced:config", () => {
     config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
     repoTabs()
-    for (const node of document.querySelectorAll("[data-ujc-sections]")) node.remove()
+    for (const node of document.querySelectorAll("[data-ujc-sections], [data-ujc-drawer]")) node.remove()
     schedule()
   })
   apply()
