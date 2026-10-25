@@ -505,8 +505,10 @@
     range.setEnd(text, prefix.length)
     const width = labels.reduce((sum, label) => sum + label.getBoundingClientRect().width + parseFloat(getComputedStyle(label).marginRight), 0)
     const shift = width - range.getBoundingClientRect().width
+    const wrapped = title.getClientRects().length > 1
     title.style.setProperty("margin-inline-start", `${shift}px`)
-    cover.style.setProperty("margin-inline-start", `${-shift}px`)
+    cover.style.setProperty("margin-inline-start", wrapped ? "0" : `${-shift}px`)
+    cover.style.setProperty("width", wrapped ? "anchor-size(width)" : `calc(anchor-size(width) + ${shift}px)`)
   }
 
   const BASES = /\/tree\/(canary|dev|develop|main|master|prod|production|staging)$/
@@ -519,8 +521,12 @@
   const DATE = { format: "datetime", weekday: "", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", prefix: "" }
   const absoluteDates = () => {
     for (const time of document.querySelectorAll("relative-time:is(:not([format]), [format='auto'], [format='relative'])")) {
-      if (Date.now() - Date.parse(time.getAttribute("datetime")) < 1.5 * 864e5) continue
+      if (!(Date.now() - Date.parse(time.getAttribute("datetime")) >= 1.5 * 864e5)) continue
       for (const [name, value] of Object.entries(DATE)) time.setAttribute(name, value)
+      const date = new Date(time.getAttribute("datetime"))
+      const year = date.getFullYear() !== new Date().getFullYear() && { year: "numeric" }
+      time.setAttribute("data-ujc-text", date.toLocaleString(time.closest("[lang]")?.lang || undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", ...year }))
+      time.style.setProperty("--ujc-size", getComputedStyle(time).fontSize)
     }
   }
 

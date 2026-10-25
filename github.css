@@ -341,3 +341,12 @@ h1 [data-ujc-type] {
 :has(> [data-ujc-base]):not(:has(> [data-component="Flash"]:not([data-ujc-base]))) {
   display: none !important;
 }
+
+relative-time[data-ujc-text]:not(:defined) {
+  font-size: 0;
+}
+
+relative-time[data-ujc-text]:not(:defined)::before {
+  content: attr(data-ujc-text);
+  font-size: var(--ujc-size);
+}
