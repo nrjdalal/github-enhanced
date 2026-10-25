@@ -1,4 +1,4 @@
-# github-enhanced
+# GitHub Enhanced
 
 Flash-free tweaks for github.com, as a browser extension. Every tweak lands as the page parses, before its first paint, so nothing flashes or shifts.
 

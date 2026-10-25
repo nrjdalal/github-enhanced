@@ -7,9 +7,9 @@ const sync = (config) => {
   document.dispatchEvent(new Event("github-enhanced:config"))
 }
 chrome.storage.sync.get("config", ({ config }) => {
+  if (config !== undefined) return sync(config)
   const saved = localStorage.getItem(KEY)
-  if (config === undefined && saved) chrome.storage.sync.set({ config: JSON.parse(saved) })
-  else sync(config)
+  if (saved && saved !== "{}") chrome.storage.sync.set({ config: JSON.parse(saved) })
 })
 chrome.storage.onChanged.addListener((changes) => changes.config && sync(changes.config.newValue))
 chrome.runtime.sendMessage("check-update")
