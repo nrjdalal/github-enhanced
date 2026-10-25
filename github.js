@@ -1,4 +1,4 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, and fills Squash and merge's commit title with the pull request's title and number.
+// Keeps a repo's tabs listed in repoTabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, and folds or opens a changed file when its header bar is clicked anywhere but a button or link.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -24,6 +24,13 @@
     },
     true,
   )
+  document.addEventListener("click", (event) => {
+    const path = event.composedPath().filter((node) => node instanceof Element)
+    const header = path.find((node) => node.matches("[class*='diff-file-header']"))
+    if (!header || event.button !== 0 || path.some((node) => node.matches("a, button, input, label, select, summary, textarea, [role='button'], [role='checkbox']")) || getSelection().toString()) return
+    const label = (button) => (button.getAttribute("aria-label") ?? document.getElementById(button.getAttribute("aria-labelledby"))?.textContent ?? "").trim()
+    ;[...header.querySelectorAll("button")].find((button) => /^(Collapse|Expand) file$/.test(label(button)))?.click()
+  })
   const ICONS = {
     "git-merge": '<path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>',
     inbox: '<path d="M2.8 2.06A1.75 1.75 0 0 1 4.41 1h7.18c.7 0 1.333.417 1.61 1.06l2.74 6.395c.04.093.06.194.06.295v4.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25v-4.5c0-.101.02-.202.06-.295Zm1.61.44a.25.25 0 0 0-.23.152L1.887 8H4.75a.75.75 0 0 1 .6.3L6.625 10h2.75l1.275-1.7a.75.75 0 0 1 .6-.3h2.863L11.82 2.652a.25.25 0 0 0-.23-.152Zm10.09 7h-2.875l-1.275 1.7a.75.75 0 0 1-.6.3h-3.5a.75.75 0 0 1-.6-.3L4.375 9.5H1.5v3.75c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25Z"/>',
@@ -32,6 +39,7 @@
   const AVATARS = "ujc-avatars"
   const avatarUrl = (owner) => `https://github.com/${owner}.png?size=32`
   const avatars = JSON.parse(localStorage.getItem(AVATARS) ?? "{}")
+  const entries = (list) => (list ?? []).flatMap((item) => (typeof item === "string" ? [[item]] : Object.entries(item ?? {})))
   const ORGS = "ujc-orgs"
   const orgs = JSON.parse(localStorage.getItem(ORGS) ?? "{}")
   const avatar = (owner) => {
@@ -42,13 +50,29 @@
   }
   const CONFIG = "github-enhanced-config"
   let config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
+  const repoTabs = () => {
+    document.getElementById("ujc-repo-tabs")?.remove()
+    const tabs = config.repoTabs ?? []
+    if (!tabs.length) return
+    const nav = 'nav[aria-label="Repository"]'
+    const style = document.createElement("style")
+    style.id = "ujc-repo-tabs"
+    style.textContent = [
+      `${nav}[data-overflow-mode="wrap"] { --UnderlineNav_moreButton-display: flex; }`,
+      `${nav} > ul > li:has(> a[data-tab-item]) { order: ${tabs.length + 2}; }`,
+      ...tabs.map((tab, i) => `${nav} > ul > li:has(> a[data-tab-item="${CSS.escape(tab)}"]) { order: ${i + 1}; }`),
+      `${nav} > ul::after { content: ""; order: ${tabs.length + 1}; flex-basis: 100%; }`,
+    ].join("\n")
+    document.documentElement.append(style)
+  }
+  repoTabs()
   const hydrated = (el) => Object.keys(el).some((key) => key.startsWith("__reactFiber$"))
 
   const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
       if (partial.previousElementSibling?.hasAttribute("data-ujc-sections")) continue
-      const pulls = (config.pullRequests ?? []).map((repo) => [`/${repo}/pulls`, repo.split("/")[1], repo.split("/")[0]])
-      const all = (config.allRepositories ?? []).map((owner) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, owner, owner])
+      const pulls = entries(config.pullRequests).map(([repo, label]) => [`/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])
+      const all = entries(config.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])
       for (const [title, rows] of [["Pull Requests", pulls], ["All Repositories", all]]) {
         if (!rows.length) continue
         const box = document.createElement("div")
@@ -267,13 +291,13 @@
 
   const cacheAvatars = async () => {
     const next = {}
-    const owners = [...(config.pullRequests ?? []).map((repo) => repo.split("/")[0]), ...(config.allRepositories ?? [])]
+    const owners = [...entries(config.pullRequests).map(([repo]) => repo.split("/")[0]), ...entries(config.allRepositories).map(([owner]) => owner)]
     for (const owner of new Set(owners.filter(Boolean))) {
       const url = (await toDataUrl(avatarUrl(owner))) ?? avatars[owner]
       if (url) next[owner] = url
     }
     localStorage.setItem(AVATARS, JSON.stringify(next))
-    const unknown = (config.allRepositories ?? []).filter((owner) => !(owner in orgs))
+    const unknown = entries(config.allRepositories).map(([owner]) => owner).filter((owner) => !(owner in orgs))
     for (const owner of unknown) {
       const org = await fetch(`/orgs/${owner}/repositories`, { method: "HEAD" }).then((res) => res.ok, () => undefined)
       if (org !== undefined) orgs[owner] = org
@@ -287,6 +311,7 @@
   if (location.pathname === "/") addEventListener("load", () => requestIdleCallback(cacheAvatars))
   document.addEventListener("github-enhanced:config", () => {
     config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
+    repoTabs()
     for (const node of document.querySelectorAll("[data-ujc-sections]")) node.remove()
     schedule()
   })

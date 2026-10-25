@@ -2,12 +2,18 @@ const field = document.getElementById("config")
 const status = document.getElementById("status")
 const TEMPLATE = `{
   "pullRequests": [
-    // "owner/repo",
-    // "nrjdalal/zerostarter"
+    // "owner/repo", or { "owner/repo": "Label" } to name it
+    // "nrjdalal/zerostarter",
+    // { "vercel/next.js": "Next" }
   ],
   "allRepositories": [
-    // "user or org",
-    // "octocat"
+    // "user or org", or { "user or org": "Label" } to name it
+    // "octocat",
+    // { "github": "GitHub" }
+  ],
+  "repoTabs": [
+    // tabs kept in a repo's bar, in order; the rest move under More
+    // "code", "issues", "pull-requests", "actions"
   ]
 }`
 

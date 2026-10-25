@@ -18,7 +18,7 @@ The GitHub mark becomes a home button styled like the menu button.
 
 ### Repo tabs
 
-Code, Actions, Issues and Pull requests stay in the bar; the rest move under More at every width.
+Off until you list tabs in `repoTabs`. The tabs you list stay in the bar, in your order; the rest move under More at every width. Here `repoTabs` is `["code", "actions", "issues", "pull-requests"]`.
 
 ![Repo tab bar with Code, Actions, Issues and Pull requests, and More on the right](assets/repo-tabs.png)
 
@@ -40,6 +40,12 @@ Squash and merge fills its commit title with the pull request's title and number
 
 <img src="assets/squash-title.png" alt="Squash and merge form with the commit message set to the pull request title and number" width="560">
 
+### Fold a file from its header
+
+On a pull request's Files changed tab, a click on any empty part of a file's header bar folds or opens that file, as the arrow at its left does. Buttons and links in the bar, the file name included, work as before.
+
+<img src="assets/fold-file.png" alt="Files changed with the first file folded to its header bar and the second file open" width="680">
+
 ## Install
 
 1. Clone or download this repo.
@@ -52,17 +58,19 @@ It works in Chrome and other Chromium browsers, such as Helium, Arc, Brave and E
 
 Click the extension's toolbar button, or its **Options**, to edit its config, one JSON object; `//` comments are allowed and kept. An empty config starts with commented-out examples. Open github.com tabs update as soon as you save.
 
-<img src="assets/settings.png" alt="Settings with the config as JSON: pullRequests and allRepositories" width="512">
+<img src="assets/settings.png" alt="Settings with the config as JSON: pullRequests, allRepositories and repoTabs" width="512">
 
 ```json
 {
-  "pullRequests": ["nrjdalal/zerostarter"],
-  "allRepositories": ["octocat"]
+  "pullRequests": ["nrjdalal/zerostarter", { "vercel/next.js": "Next.js" }],
+  "allRepositories": ["octocat", { "github": "GitHub" }],
+  "repoTabs": ["code", "actions", "issues", "pull-requests"]
 }
 ```
 
-- `pullRequests` lists `owner/repo`, in order; each shows as the repo's name and links to its pull requests.
-- `allRepositories` lists users and orgs, in order; each links to its repositories. Whether a name is an org is learned once, from whether its `github.com/orgs/<name>` page exists, and kept in github.com's localStorage.
+- `pullRequests` lists `owner/repo`, in order; each links to the repo's pull requests and shows as the repo's name, or as the label you give it with `{ "owner/repo": "Label" }`.
+- `allRepositories` lists users and orgs, in order; each links to its repositories and shows as its name, or as the label you give it with `{ "name": "Label" }`. Whether a name is an org is learned once, from whether its `github.com/orgs/<name>` page exists, and kept in github.com's localStorage.
+- `repoTabs` lists the repo tabs kept in the bar, in order, by their ids: `code`, `issues`, `pull-requests`, `agents`, `discussions`, `actions`, `projects`, `wiki`, `security-and-quality`, `insights`, `settings`. Leave it out to keep GitHub's own tab bar.
 
 The config syncs through your browser profile. Avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
 

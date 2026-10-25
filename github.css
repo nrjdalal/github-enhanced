@@ -110,36 +110,6 @@ header a[href="/"] > svg.octicon-mark-github > path {
   display: none;
 }
 
-nav[aria-label="Repository"][data-overflow-mode="wrap"] {
-  --UnderlineNav_moreButton-display: flex;
-}
-
-nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item]) {
-  order: 6;
-}
-
-nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="code"]) {
-  order: 1;
-}
-
-nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="actions"]) {
-  order: 2;
-}
-
-nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="issues"]) {
-  order: 3;
-}
-
-nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="pull-requests"]) {
-  order: 4;
-}
-
-nav[aria-label="Repository"] > ul::after {
-  content: "";
-  order: 5;
-  flex-basis: 100%;
-}
-
 nav[data-ujc-pr-tabs] {
   display: flex;
   gap: 8px;
@@ -195,7 +165,6 @@ nav[data-ujc-pr-tabs] > a::after {
   background: var(--tooltip-bgColor);
   color: var(--tooltip-fgColor);
   font: var(--text-body-shorthand-small);
-  pointer-events: none;
   animation: ujc-tooltip 0.1s ease-in;
 }
 
