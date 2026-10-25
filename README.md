@@ -28,6 +28,12 @@ The "All pull requests" heading becomes three icon tabs with GitHub-style toolti
 
 <img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
+### Pull request sidebar
+
+A box with nothing in it shows only its title: "No reviews", "No one assigned", "None yet" and "No milestone" are hidden, and so is Development's "Successfully merging this pull request may close these issues." while no issue is linked. Its gear still opens the box to fill it.
+
+<img src="assets/pr-sidebar.png" alt="A pull request's sidebar before, with an empty line under Reviewers, Assignees, Labels, Projects and Milestone, and after, with only their titles" width="680">
+
 ## Install
 
 1. Clone or download this repo.

@@ -1,4 +1,4 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, and opens a repo's pull request lists sorted by last update unless the search names a sort.
+// Puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -176,6 +176,33 @@
     })
   }
 
+  const EMPTY = new Set(["No reviews", "No one—", "No one assigned", "None yet", "No milestone"])
+  const hide = (node) => {
+    if (node.nodeType === Node.ELEMENT_NODE) return node.setAttribute("data-ujc-empty", "")
+    const span = document.createElement("span")
+    span.setAttribute("data-ujc-empty", "")
+    node.replaceWith(span)
+    span.append(node)
+  }
+  const emptySidebar = () => {
+    for (const item of document.querySelectorAll(".discussion-sidebar-item")) {
+      const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT)
+      const found = []
+      while (walker.nextNode()) {
+        const node = walker.currentNode
+        if (EMPTY.has(node.nodeValue.trim()) && !node.parentElement.closest("[data-ujc-empty], summary, details-menu, h3")) found.push(node)
+      }
+      for (const node of found) {
+        const assign = node.nodeValue.trim() === "No one—" && node.nextElementSibling
+        const line = node.parentElement.matches("p") && node.parentElement.textContent.trim() === node.nodeValue.trim()
+        hide(line ? node.parentElement : node)
+        if (assign?.matches?.(".js-issue-assign-self")) hide(assign)
+        const merging = node.parentElement?.closest("form")?.querySelector(":scope > p")
+        if (merging?.textContent.startsWith("Successfully merging")) hide(merging)
+      }
+    }
+  }
+
   const linkAvatar = () => {
     for (const img of document.querySelectorAll("img.avatar")) {
       if (img.closest("a") || !img.parentElement.querySelector("select-panel[id^='switch_dashboard_context']")) continue
@@ -192,6 +219,7 @@
       linkAvatar()
       sections()
     }
+    if (/^\/[^/]+\/[^/]+\/pull\/\d+/.test(location.pathname)) emptySidebar()
     pending = false
     prTabs()
     document.documentElement.toggleAttribute("data-ujc-pending", pending)
