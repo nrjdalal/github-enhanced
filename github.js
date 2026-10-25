@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows "Top repositories" from the last visit until GitHub's list loads, then animates rows that moved, came or went, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, and folds or opens a changed file when its header bar is clicked anywhere but a button or link.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows "Top repositories" from the last visit until GitHub's list loads, then animates rows that moved, came or went, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -31,6 +31,25 @@
     const label = (button) => (button.getAttribute("aria-label") ?? document.getElementById(button.getAttribute("aria-labelledby"))?.textContent ?? "").trim()
     ;[...header.querySelectorAll("button")].find((button) => /^(Collapse|Expand) file$/.test(label(button)))?.click()
   })
+  const VIEWED = "[class*='diff-file-header'] button:is([aria-label='Viewed'], [aria-label='Not Viewed'])"
+  let lastViewed = -1
+  document.addEventListener(
+    "click",
+    (event) => {
+      const button = event.composedPath().find((node) => node instanceof Element && node.matches(VIEWED))
+      if (!button) return
+      const buttons = [...document.querySelectorAll(VIEWED)]
+      const index = buttons.indexOf(button)
+      if (event.shiftKey && lastViewed >= 0 && lastViewed !== index) {
+        getSelection().removeAllRanges()
+        const viewed = button.getAttribute("aria-pressed") !== "true"
+        const range = buttons.slice(Math.min(lastViewed, index), Math.max(lastViewed, index) + 1)
+        for (const other of range) if (other !== button && (other.getAttribute("aria-pressed") === "true") !== viewed) other.click()
+      }
+      lastViewed = index
+    },
+    true,
+  )
   const ICONS = {
     "git-merge": '<path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>',
     inbox: '<path d="M2.8 2.06A1.75 1.75 0 0 1 4.41 1h7.18c.7 0 1.333.417 1.61 1.06l2.74 6.395c.04.093.06.194.06.295v4.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25v-4.5c0-.101.02-.202.06-.295Zm1.61.44a.25.25 0 0 0-.23.152L1.887 8H4.75a.75.75 0 0 1 .6.3L6.625 10h2.75l1.275-1.7a.75.75 0 0 1 .6-.3h2.863L11.82 2.652a.25.25 0 0 0-.23-.152Zm10.09 7h-2.875l-1.275 1.7a.75.75 0 0 1-.6.3h-3.5a.75.75 0 0 1-.6-.3L4.375 9.5H1.5v3.75c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25Z"/>',

@@ -46,6 +46,12 @@ On a pull request's Files changed tab, a click on any empty part of a file's hea
 
 <img src="assets/fold-file.png" alt="Files changed with the first file folded to its header bar and the second file open" width="680">
 
+### Mark many files as viewed
+
+Click Viewed on one file, then shift-click Viewed on another: every file between them gets the same mark and folds. A shift-click on a viewed file unmarks the range; a plain click works as before.
+
+<img src="assets/viewed-range.png" alt="Files changed with four files marked Viewed and folded after one click and one shift-click" width="680">
+
 ## Install
 
 1. Clone or download this repo.
