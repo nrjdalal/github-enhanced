@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "github-enhanced",
+  "version": "1.0",
+  "description": "github-enhanced as an unpacked extension, for a browser without User JavaScript and CSS",
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["config.js", "github.js"],
+      "css": ["github.css"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

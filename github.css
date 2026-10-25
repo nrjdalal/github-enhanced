@@ -1,0 +1,244 @@
+[data-ujc-sections] {
+  padding-top: 16px;
+  margin-bottom: -9px;
+}
+
+[data-ujc-sections] h2 {
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--fgColor-muted);
+}
+
+[data-ujc-sections] ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 5px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-ujc-sections] li {
+  min-width: 0;
+  border-radius: 6px;
+  transition: background 33ms linear;
+}
+
+[data-ujc-sections] li:nth-child(odd) {
+  margin-left: 8px;
+}
+
+[data-ujc-sections] li:nth-child(even) {
+  margin-right: 8px;
+}
+
+[data-ujc-sections] li:hover {
+  background: var(--control-transparent-bgColor-hover);
+}
+
+[data-ujc-sections] li:active {
+  background: var(--control-transparent-bgColor-active);
+}
+
+[data-ujc-sections] a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--fgColor-default);
+  text-decoration: none;
+}
+
+[data-ujc-sections] img {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--avatar-bgColor);
+  box-shadow: 0 0 0 1px var(--avatar-borderColor);
+}
+
+[data-ujc-sections] span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]) > :nth-child(odd) {
+  margin-right: 0 !important;
+}
+
+ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]) > :nth-child(even) {
+  margin-left: 0 !important;
+}
+
+ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]) > ::after {
+  display: none !important;
+}
+
+ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]):not(:has(> [data-ujc-extra]))::after {
+  content: "";
+  grid-column: 1 / -1;
+  height: 33px;
+}
+
+[data-ujc-avatar] {
+  display: flex;
+  flex-shrink: 0;
+}
+
+header a[href="/"]:has(> svg.octicon-mark-github) {
+  margin-left: 0;
+  border-color: var(--button-default-borderColor-rest);
+  border-radius: 6px;
+}
+
+header a[href="/"] > svg.octicon-mark-github {
+  background-color: var(--button-invisible-iconColor-rest);
+  mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"%3E%3Cpath d="M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z"/%3E%3C/svg%3E') center / 16px no-repeat;
+}
+
+header a[href="/"] > svg.octicon-mark-github > path {
+  display: none;
+}
+
+nav[aria-label="Repository"][data-overflow-mode="wrap"] {
+  --UnderlineNav_moreButton-display: flex;
+}
+
+nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item]) {
+  order: 6;
+}
+
+nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="code"]) {
+  order: 1;
+}
+
+nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="actions"]) {
+  order: 2;
+}
+
+nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="issues"]) {
+  order: 3;
+}
+
+nav[aria-label="Repository"] > ul > li:has(> a[data-tab-item="pull-requests"]) {
+  order: 4;
+}
+
+nav[aria-label="Repository"] > ul::after {
+  content: "";
+  order: 5;
+  flex-basis: 100%;
+}
+
+nav[data-ujc-pr-tabs] {
+  display: flex;
+  gap: 8px;
+}
+
+nav[data-ujc-pr-tabs] > a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--control-borderColor-rest);
+  border-radius: 6px;
+  color: var(--button-invisible-iconColor-rest);
+  transition:
+    color 80ms cubic-bezier(0.65, 0, 0.35, 1),
+    background-color 80ms cubic-bezier(0.65, 0, 0.35, 1),
+    border-color 80ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+nav[data-ujc-pr-tabs] > a:hover {
+  background-color: var(--button-invisible-bgColor-hover);
+  color: var(--button-invisible-iconColor-hover);
+}
+
+nav[data-ujc-pr-tabs] > a:active,
+nav[data-ujc-pr-tabs] > a[aria-current] {
+  background-color: var(--button-invisible-bgColor-active);
+}
+
+nav[data-ujc-pr-tabs] > a:active {
+  transition: none;
+}
+
+nav[data-ujc-pr-tabs] > a[aria-current] {
+  color: var(--fgColor-default);
+}
+
+nav[data-ujc-pr-tabs] > a {
+  position: relative;
+}
+
+nav[data-ujc-pr-tabs] > a::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  display: none;
+  width: max-content;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--tooltip-bgColor);
+  color: var(--tooltip-fgColor);
+  font: var(--text-body-shorthand-small);
+  pointer-events: none;
+  animation: ujc-tooltip 0.1s ease-in;
+}
+
+nav[data-ujc-pr-tabs] > a[data-tip="center"]::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+nav[data-ujc-pr-tabs] > a[data-tip="end"]::after {
+  right: 0;
+  left: auto;
+}
+
+nav[data-ujc-pr-tabs] > a:hover::after,
+nav[data-ujc-pr-tabs] > a:focus-visible::after {
+  display: block;
+}
+
+@keyframes ujc-tooltip {
+  from {
+    opacity: 0;
+  }
+}
+
+nav[data-ujc-pr-tabs] > a:focus-visible {
+  outline: 2px solid var(--focus-outlineColor);
+  outline-offset: -2px;
+}
+
+nav[data-ujc-pr-tabs] + h1[data-testid="header-title"] {
+  display: none;
+}
+
+aside ul:has(> li[data-ujc-merged][data-active]) > li[data-active]:not([data-ujc-merged]) {
+  background: transparent;
+}
+
+aside ul:has(> li[data-ujc-merged][data-active]) > li[data-active]:not([data-ujc-merged])::after {
+  display: none;
+}
+
+aside ul:has(> li[data-ujc-merged][data-active]) > li[data-active]:not([data-ujc-merged]) [class*="ItemLabel"] {
+  font-weight: var(--base-text-weight-normal);
+}
