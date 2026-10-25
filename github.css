@@ -86,10 +86,10 @@ ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]) 
   display: none !important;
 }
 
-ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]):not(:has(> [data-ujc-extra]))::after {
+html[style*="--ujc-nav-rows"] ul.ActionListWrap:has(> li[data-item-id="home"]):has(> li[data-item-id="feed"]):not(:has(> [data-ujc-extra]))::after {
   content: "";
   grid-column: 1 / -1;
-  height: 33px;
+  height: calc(33px * var(--ujc-nav-rows));
 }
 
 [data-ujc-avatar] {
@@ -228,7 +228,20 @@ nav[data-ujc-pr-tabs] > a:focus-visible {
 }
 
 nav[data-ujc-pr-tabs] + h1[data-testid="header-title"] {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+html[data-ujc-pending] h1[data-testid="header-title"] {
+  visibility: hidden;
+}
+
+html[data-ujc-pending] aside li:has(> a[href*="/pulls/"]):not(:has(> a[href*="/pulls/assigned/"], > a[href*="/pulls/involves/"], > a[href*="/pulls/review-requested/"])) {
+  margin-bottom: var(--ujc-merged-row);
 }
 
 aside ul:has(> li[data-ujc-merged][data-active]) > li[data-active]:not([data-ujc-merged]) {

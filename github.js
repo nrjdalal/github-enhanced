@@ -1,4 +1,4 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds a Bookmarks section above the dashboard's "Top repositories", listing window.githubBookmarks (config.js) in static markup with avatars kept in localStorage, so it renders at first paint, and swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too.
+// Puts Home and Feed side by side, links the account avatar to its profile and adds a Bookmarks section above the dashboard's "Top repositories", listing the bookmarks set in the extension popup in static markup with avatars kept in localStorage, so it renders at first paint, and swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too.
 ;(() => {
   const ICONS = {
     book: '<path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/>',
@@ -10,6 +10,15 @@
   const AVATARS = "ujc-avatars"
   const avatarUrl = (owner) => `https://github.com/${owner}.png?size=32`
   const avatars = JSON.parse(localStorage.getItem(AVATARS) ?? "{}")
+  const CONFIG = "github-enhanced-config"
+  let config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
+  const reserveNav = () => {
+    const rows = Math.ceil((config.nav ?? []).length / 2)
+    if (rows) document.documentElement.style.setProperty("--ujc-nav-rows", rows)
+    else document.documentElement.style.removeProperty("--ujc-nav-rows")
+  }
+  reserveNav()
+  const hydrated = (el) => Object.keys(el).some((key) => key.startsWith("__reactFiber$"))
 
   const bookmarks = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
@@ -19,7 +28,7 @@
       const head = document.createElement("h2")
       head.textContent = "Bookmarks"
       const list = document.createElement("ul")
-      for (const [repo, name] of Object.entries(window.githubBookmarks ?? {})) {
+      for (const [name, repo] of config.bookmarks ?? []) {
         const li = document.createElement("li")
         const a = document.createElement("a")
         a.href = `/${repo}`
@@ -43,7 +52,7 @@
     if (!list || ![...list.querySelectorAll("a")].some((a) => a.textContent.trim() === "Feed")) return
     const template = [...list.children].find((li) => !li.hasAttribute("data-ujc-extra") && !li.classList.contains("ActionListItem--navActive"))
     if (!template?.querySelector(".ActionListItem-label")?.textContent.trim() || list.querySelector("[data-ujc-extra]")) return
-    for (const [href, [label, iconName]] of Object.entries(window.githubNav ?? {})) {
+    for (const [label, href, iconName] of config.nav ?? []) {
       const li = template.cloneNode(true)
       li.setAttribute("data-ujc-extra", "")
       li.removeAttribute("data-item-id")
@@ -66,8 +75,8 @@
   const terms = (q) => (q ?? "").trim().split(/\s+/).filter(Boolean).sort().join(" ")
   const DEFAULT_PR_QUERIES = ["", terms("is:pr state:open"), terms("is:pr is:open")]
 
+  const ctx = document.createElement("canvas").getContext("2d")
   const alignTip = ({ currentTarget: a }) => {
-    const ctx = document.createElement("canvas").getContext("2d")
     ctx.font = getComputedStyle(a, "::after").font
     const half = (ctx.measureText(a.getAttribute("aria-label")).width + 16) / 2
     const { left, width } = a.getBoundingClientRect()
@@ -75,30 +84,49 @@
     a.dataset.tip = mid - half < a.parentElement.getBoundingClientRect().left ? "start" : mid + half > innerWidth - 8 ? "end" : "center"
   }
 
+  let pending = false
+  const overlay = (node, top, left) => {
+    if (node.parentElement !== document.body) document.body.append(node)
+    node.style.cssText = `position: absolute; top: ${top + scrollY}px; left: ${left + scrollX}px; margin: 0`
+    pending = true
+  }
+
+  let merged
   const prSidebar = (authoredHref, [label, icon, href, active]) => {
     const authored = document.querySelector(`aside a[href='${authoredHref}']`)?.closest("li")
     if (!authored) return
-    let li = authored.nextElementSibling
-    if (!li?.hasAttribute("data-ujc-merged")) {
-      li = authored.cloneNode(true)
-      li.setAttribute("data-ujc-merged", "")
-      const a = li.querySelector("a")
-      li.querySelector(`[id='${a.getAttribute("aria-labelledby")}']`)?.removeAttribute("id")
+    if (!merged) {
+      merged = authored.cloneNode(true)
+      merged.setAttribute("data-ujc-merged", "")
+      const a = merged.querySelector("a")
+      merged.querySelector(`[id='${a.getAttribute("aria-labelledby")}']`)?.removeAttribute("id")
       a.removeAttribute("id")
       a.removeAttribute("aria-labelledby")
       a.href = href
-      const svg = li.querySelector("svg")
+      const svg = merged.querySelector("svg")
       svg.setAttribute("class", `octicon octicon-${icon}`)
       svg.innerHTML = ICONS[icon]
-      const walker = document.createTreeWalker(li, NodeFilter.SHOW_TEXT)
+      const walker = document.createTreeWalker(merged, NodeFilter.SHOW_TEXT)
       while (walker.nextNode()) if (walker.currentNode.nodeValue.trim() === "Authored by me") walker.currentNode.nodeValue = label
-      authored.after(li)
     }
-    li.querySelector("a").setAttribute("aria-current", active ? "page" : "false")
-    if (active) li.setAttribute("data-active", "true")
-    else li.removeAttribute("data-active")
+    if (hydrated(authored)) {
+      if (authored.nextElementSibling !== merged) {
+        merged.style.cssText = ""
+        authored.after(merged)
+      }
+    } else {
+      const { bottom, left, width } = authored.getBoundingClientRect()
+      overlay(merged, bottom, left)
+      merged.style.width = `${width}px`
+      merged.style.listStyle = "none"
+      document.documentElement.style.setProperty("--ujc-merged-row", `${authored.offsetHeight}px`)
+    }
+    merged.querySelector("a").setAttribute("aria-current", active ? "page" : "false")
+    if (active) merged.setAttribute("data-active", "true")
+    else merged.removeAttribute("data-active")
   }
 
+  let nav
   const prTabs = () => {
     const [, owner, repo, page, rest] = location.pathname.split("/")
     const login = document.querySelector("meta[name='user-login']")?.content
@@ -112,8 +140,7 @@
       ["Merged by me", "git-merge", `${pulls}?q=${encodeURIComponent(`is:pr state:merged author:${login}`)}`, !rest && q === terms(`is:pr state:merged author:${login}`)],
     ]
     prSidebar(`${pulls}/${login}`, tabs[2])
-    let nav = title.previousElementSibling
-    if (!nav?.hasAttribute("data-ujc-pr-tabs")) {
+    if (!nav) {
       nav = document.createElement("nav")
       nav.setAttribute("data-ujc-pr-tabs", "")
       nav.setAttribute("aria-label", "Pull request filters")
@@ -126,7 +153,15 @@
         a.innerHTML = `<svg class="octicon octicon-${icon}" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">${ICONS[icon]}</svg>`
         nav.append(a)
       }
-      title.before(nav)
+    }
+    if (hydrated(title)) {
+      if (title.previousElementSibling !== nav) {
+        nav.style.cssText = ""
+        title.before(nav)
+      }
+    } else {
+      const { top, left, height } = title.getBoundingClientRect()
+      overlay(nav, top + (height - 32) / 2, left)
     }
     tabs.forEach(([, , , active], i) => {
       if (active) nav.children[i].setAttribute("aria-current", "page")
@@ -146,10 +181,15 @@
   }
 
   const apply = () => {
-    pairNav()
-    linkAvatar()
-    bookmarks()
+    if (location.pathname === "/") {
+      pairNav()
+      linkAvatar()
+      bookmarks()
+    }
+    pending = false
     prTabs()
+    document.documentElement.toggleAttribute("data-ujc-pending", pending)
+    if (pending) schedule()
   }
 
   let queued = false
@@ -178,14 +218,20 @@
 
   const cacheAvatars = async () => {
     const next = {}
-    for (const owner of new Set(Object.keys(window.githubBookmarks ?? {}).map((repo) => repo.split("/")[0]))) {
-      const url = await toDataUrl(avatarUrl(owner))
+    for (const owner of new Set((config.bookmarks ?? []).map(([, repo]) => repo.split("/")[0]))) {
+      const url = (await toDataUrl(avatarUrl(owner))) ?? avatars[owner]
       if (url) next[owner] = url
     }
     localStorage.setItem(AVATARS, JSON.stringify(next))
   }
 
-  addEventListener("load", () => requestIdleCallback(cacheAvatars))
+  if (location.pathname === "/") addEventListener("load", () => requestIdleCallback(cacheAvatars))
+  document.addEventListener("github-enhanced:config", () => {
+    config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
+    reserveNav()
+    for (const node of document.querySelectorAll("[data-ujc-sections], [data-ujc-extra]")) node.remove()
+    schedule()
+  })
   apply()
   new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true })
 })()
