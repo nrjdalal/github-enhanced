@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, and folds or opens a changed file when its header bar is clicked anywhere but a button or link.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows "Top repositories" from the last visit until GitHub's list loads, then animates rows that moved, came or went, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, and folds or opens a changed file when its header bar is clicked anywhere but a button or link.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -94,6 +94,55 @@
         partial.before(box)
       }
     }
+  }
+
+  const TOP = "ujc-top-repos"
+  const repoRows = (el) => [...el.querySelectorAll("li[data-component='ActionList.Item']")].filter((li) => li.querySelector(":scope > a[href]"))
+  const rowKey = (li) => li.querySelector(":scope > a").getAttribute("href")
+  let topSaved = false
+  const swapTop = (cache, partial) => {
+    const cached = repoRows(cache)
+    const before = new Map(cached.map((li) => [rowKey(li), li.getBoundingClientRect().top]))
+    partial.removeAttribute("data-ujc-loading")
+    const live = repoRows(partial)
+    const keys = new Set(live.map(rowKey))
+    const leaving = cached.filter((li) => !keys.has(rowKey(li))).map((li) => [li, li.getBoundingClientRect()])
+    cache.remove()
+    const motion = { duration: 300, easing: "ease-out" }
+    for (const li of live) {
+      const from = before.get(rowKey(li))
+      const top = li.getBoundingClientRect().top
+      if (from === undefined) li.animate([{ opacity: 0 }, { opacity: 1 }], motion)
+      else if (from !== top) li.animate([{ transform: `translateY(${from - top}px)` }, { transform: "none" }], motion)
+    }
+    for (const [li, rect] of leaving) {
+      li.style.cssText = `position: absolute; top: ${rect.top + scrollY}px; left: ${rect.left + scrollX}px; width: ${rect.width}px; margin: 0; list-style: none; pointer-events: none`
+      document.body.append(li)
+      li.animate([{ opacity: 1 }, { opacity: 0 }], motion).finished.then(() => li.remove())
+    }
+  }
+  const topRepos = () => {
+    const partial = document.querySelector("react-partial[partial-name='dashboard-repositories']")
+    const root = partial?.querySelector("[data-target='react-partial.reactRoot']")
+    if (!root) return
+    const cache = document.querySelector("[data-ujc-top]")
+    if (!repoRows(root).length) {
+      const html = localStorage.getItem(TOP)
+      if (cache || topSaved || !html) return
+      const node = document.createElement("div")
+      node.setAttribute("data-ujc-top", "")
+      node.innerHTML = html
+      for (const el of node.querySelectorAll("[id]")) el.removeAttribute("id")
+      partial.after(node)
+      partial.setAttribute("data-ujc-loading", "")
+      addEventListener("load", () => setTimeout(() => node.isConnected && swapTop(node, partial), 5000))
+      return
+    }
+    if (!topSaved) {
+      topSaved = true
+      localStorage.setItem(TOP, root.innerHTML)
+    }
+    if (cache) swapTop(cache, partial)
   }
 
   const terms = (q) => (q ?? "").trim().split(/\s+/).filter((term) => term && !term.startsWith("sort:")).sort().join(" ")
@@ -254,6 +303,7 @@
     if (location.pathname === "/") {
       linkAvatar()
       sections()
+      topRepos()
     }
     if (/^\/[^/]+\/[^/]+\/pull\/\d+/.test(location.pathname)) {
       emptySidebar()

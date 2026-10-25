@@ -226,3 +226,7 @@ aside ul:has(> li[data-ujc-active]) > li[data-active]:not([data-ujc-active]) [cl
 [data-ujc-empty] {
   display: none !important;
 }
+
+react-partial[data-ujc-loading] {
+  display: none !important;
+}
