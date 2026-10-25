@@ -6,9 +6,9 @@ Flash-free tweaks for github.com, as a browser extension. Every tweak lands as t
 
 ### Dashboard sidebar
 
-Home and Feed side by side, your own links under them, a Pull Requests section above "Top repositories" linking to your chosen repos' pull requests, and your avatar links to your profile.
+Home and Feed side by side, then two sections above "Top repositories": All Repositories, your own links with their user's or org's avatar, and Pull Requests, linking to your chosen repos' pull requests. Your avatar links to your profile.
 
-<img src="assets/dashboard.png" alt="Dashboard sidebar with Home and Feed side by side, two custom links with their avatars and three repos under Pull Requests" width="330">
+<img src="assets/dashboard.png" alt="Dashboard sidebar with Home and Feed side by side, two links under All Repositories and three repos under Pull Requests" width="330">
 
 ### Navbar
 
@@ -24,7 +24,7 @@ Code, Actions, Issues and Pull requests stay in the bar; the rest move under Mor
 
 ### Pull requests page
 
-The "All pull requests" heading becomes three icon tabs with GitHub-style tooltips: Pull requests, Authored by me (your open pull requests) and Merged by me (your pull requests that were merged). Merged by me also joins the page's sidebar under Authored by me. They read your username from the page, so they show only when you are signed in.
+The "All pull requests" heading becomes three icon tabs with GitHub-style tooltips: Pull requests, Authored by me (your open pull requests) and Merged by me (your pull requests that were merged). Merged by me also joins the page's sidebar under Authored by me. They read your username from the page, so they show only when you are signed in. A repo's pull request lists open sorted by last update, so a pull request with a new comment or push comes first; a search that names its own `sort:` keeps it.
 
 <img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
@@ -54,7 +54,7 @@ Click the extension's toolbar button, or its **Options**, to edit its config, on
 ```
 
 - `bookmarks` maps `owner/repo` to the name shown under Pull Requests, in order; each links to the repo's pull requests.
-- `links` maps a URL to a row under Home and Feed with its label, shown with the avatar of the user or org the URL points to (`github.com/<user>` or `github.com/orgs/<org>`).
+- `links` maps a URL to its label under All Repositories, shown with the avatar of the user or org the URL points to (`github.com/<user>` or `github.com/orgs/<org>`).
 
 The config syncs through your browser profile. Avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
 

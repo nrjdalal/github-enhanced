@@ -1,5 +1,29 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds a Pull Requests section above the dashboard's "Top repositories", linking each repo bookmarked in the extension popup to its pull requests in static markup with avatars kept in localStorage (the links under Home and Feed show their user's or org's avatar too), so it renders at first paint, and swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too.
+// Puts Home and Feed side by side, links the account avatar to its profile and adds All Repositories (the links set in the extension popup, each with its user's or org's avatar) and Pull Requests (each bookmarked repo's pull requests) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, and opens a repo's pull request lists sorted by last update unless the search names a sort.
 ;(() => {
+  const sortedUrl = (href) => {
+    const url = new URL(href, location.href)
+    const [, owner, repo, page, login, extra] = url.pathname.split("/")
+    if (url.origin !== location.origin || !repo || page !== "pulls" || extra !== undefined || (login && url.searchParams.has("q"))) return null
+    const q = url.searchParams.get("q") ?? (login ? `is:pr state:open author:${login}` : "is:pr is:open")
+    if (/(^|\s)sort:/.test(q)) return null
+    url.pathname = `/${owner}/${repo}/pulls`
+    url.searchParams.set("q", `${q} sort:updated-desc`)
+    return url.href
+  }
+  const start = sortedUrl(location.href)
+  if (start) return location.replace(start)
+  addEventListener(
+    "click",
+    (event) => {
+      const a = event.target.closest?.("a[href]")
+      const url = a && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && a.target !== "_blank" && sortedUrl(a.href)
+      if (!url) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      location.assign(url)
+    },
+    true,
+  )
   const ICONS = {
     "git-merge": '<path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>',
     inbox: '<path d="M2.8 2.06A1.75 1.75 0 0 1 4.41 1h7.18c.7 0 1.333.417 1.61 1.06l2.74 6.395c.04.093.06.194.06.295v4.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25v-4.5c0-.101.02-.202.06-.295Zm1.61.44a.25.25 0 0 0-.23.152L1.887 8H4.75a.75.75 0 0 1 .6.3L6.625 10h2.75l1.275-1.7a.75.75 0 0 1 .6-.3h2.863L11.82 2.652a.25.25 0 0 0-.23-.152Zm10.09 7h-2.875l-1.275 1.7a.75.75 0 0 1-.6.3h-3.5a.75.75 0 0 1-.6-.3L4.375 9.5H1.5v3.75c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25Z"/>',
@@ -20,61 +44,37 @@
   }
   const CONFIG = "github-enhanced-config"
   let config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
-  const reserveNav = () => {
-    const rows = Math.ceil(Object.keys(config.links ?? {}).length / 2)
-    if (rows) document.documentElement.style.setProperty("--ujc-nav-rows", rows)
-    else document.documentElement.style.removeProperty("--ujc-nav-rows")
-  }
-  reserveNav()
   const hydrated = (el) => Object.keys(el).some((key) => key.startsWith("__reactFiber$"))
 
-  const bookmarks = () => {
+  const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
       if (partial.previousElementSibling?.hasAttribute("data-ujc-sections")) continue
-      const box = document.createElement("div")
-      box.setAttribute("data-ujc-sections", "")
-      const head = document.createElement("h2")
-      head.textContent = "Pull Requests"
-      const list = document.createElement("ul")
-      for (const [repo, name] of Object.entries(config.bookmarks ?? {})) {
-        const li = document.createElement("li")
-        const a = document.createElement("a")
-        a.href = `/${repo}/pulls`
-        const img = avatar(repo.split("/")[0])
-        const label = document.createElement("span")
-        label.textContent = name
-        a.append(img, label)
-        li.append(a)
-        list.append(li)
+      const all = Object.entries(config.links ?? {}).map(([href, label]) => [href, label, linkOwner(href)])
+      const pulls = Object.entries(config.bookmarks ?? {}).map(([repo, label]) => [`/${repo}/pulls`, label, repo.split("/")[0]])
+      for (const [title, rows] of [["All Repositories", all], ["Pull Requests", pulls]]) {
+        if (!rows.length) continue
+        const box = document.createElement("div")
+        box.setAttribute("data-ujc-sections", "")
+        const head = document.createElement("h2")
+        head.textContent = title
+        const list = document.createElement("ul")
+        for (const [href, text, owner] of rows) {
+          const li = document.createElement("li")
+          const a = document.createElement("a")
+          a.href = href
+          const label = document.createElement("span")
+          label.textContent = text
+          a.append(avatar(owner), label)
+          li.append(a)
+          list.append(li)
+        }
+        box.append(head, list)
+        partial.before(box)
       }
-      box.append(head, list)
-      partial.before(box)
     }
   }
 
-  const pairNav = () => {
-    const home = [...document.querySelectorAll("li > a[href='/']")].find((a) => a.textContent.trim() === "Home")
-    const list = home?.closest("ul")
-    if (!list || ![...list.querySelectorAll("a")].some((a) => a.textContent.trim() === "Feed")) return
-    const template = [...list.children].find((li) => !li.hasAttribute("data-ujc-extra") && !li.classList.contains("ActionListItem--navActive"))
-    if (!template?.querySelector(".ActionListItem-label")?.textContent.trim() || list.querySelector("[data-ujc-extra]")) return
-    for (const [href, label] of Object.entries(config.links ?? {})) {
-      const li = template.cloneNode(true)
-      li.setAttribute("data-ujc-extra", "")
-      li.removeAttribute("data-item-id")
-      li.removeAttribute("data-analytics-event")
-      li.removeAttribute("data-targets")
-      const a = li.querySelector("a")
-      a.removeAttribute("id")
-      a.removeAttribute("aria-current")
-      a.setAttribute("href", href)
-      li.querySelector(".ActionListItem-label").textContent = label
-      li.querySelector("svg")?.replaceWith(avatar(linkOwner(href)))
-      list.append(li)
-    }
-  }
-
-  const terms = (q) => (q ?? "").trim().split(/\s+/).filter(Boolean).sort().join(" ")
+  const terms = (q) => (q ?? "").trim().split(/\s+/).filter((term) => term && !term.startsWith("sort:")).sort().join(" ")
   const DEFAULT_PR_QUERIES = ["", terms("is:pr state:open"), terms("is:pr is:open")]
 
   const ctx = document.createElement("canvas").getContext("2d")
@@ -94,7 +94,7 @@
   }
 
   let merged
-  const prSidebar = (authoredHref, [label, icon, href, active]) => {
+  const prSidebar = (authoredHref, authoredActive, [label, icon, href, active]) => {
     const authored = document.querySelector(`aside a[href='${authoredHref}']`)?.closest("li")
     if (!authored) return
     if (!merged) {
@@ -124,8 +124,15 @@
       document.documentElement.style.setProperty("--ujc-merged-row", `${authored.offsetHeight}px`)
     }
     merged.querySelector("a").setAttribute("aria-current", active ? "page" : "false")
-    if (active) merged.setAttribute("data-active", "true")
-    else merged.removeAttribute("data-active")
+    for (const [li, on] of [[authored, authoredActive], [merged, active]]) {
+      if (on) {
+        li.setAttribute("data-active", "true")
+        li.setAttribute("data-ujc-active", "")
+      } else if (li.hasAttribute("data-ujc-active")) {
+        li.removeAttribute("data-active")
+        li.removeAttribute("data-ujc-active")
+      }
+    }
   }
 
   let nav
@@ -141,7 +148,7 @@
       ["Authored by me", "smiley", `${pulls}/${login}`, rest === login || q === terms(`is:pr state:open author:${login}`)],
       ["Merged by me", "git-merge", `${pulls}?q=${encodeURIComponent(`is:pr state:merged author:${login}`)}`, !rest && q === terms(`is:pr state:merged author:${login}`)],
     ]
-    prSidebar(`${pulls}/${login}`, tabs[2])
+    prSidebar(`${pulls}/${login}`, tabs[1][3], tabs[2])
     if (!nav) {
       nav = document.createElement("nav")
       nav.setAttribute("data-ujc-pr-tabs", "")
@@ -184,9 +191,8 @@
 
   const apply = () => {
     if (location.pathname === "/") {
-      pairNav()
       linkAvatar()
-      bookmarks()
+      sections()
     }
     pending = false
     prTabs()
@@ -231,8 +237,7 @@
   if (location.pathname === "/") addEventListener("load", () => requestIdleCallback(cacheAvatars))
   document.addEventListener("github-enhanced:config", () => {
     config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
-    reserveNav()
-    for (const node of document.querySelectorAll("[data-ujc-sections], [data-ujc-extra]")) node.remove()
+    for (const node of document.querySelectorAll("[data-ujc-sections]")) node.remove()
     schedule()
   })
   apply()
