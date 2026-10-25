@@ -1,8 +1,6 @@
-// Puts Home and Feed side by side, links the account avatar to its profile and adds a Bookmarks section above the dashboard's "Top repositories", listing the bookmarks set in the extension popup in static markup with avatars kept in localStorage, so it renders at first paint, and swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too.
+// Puts Home and Feed side by side, links the account avatar to its profile and adds a Pull Requests section above the dashboard's "Top repositories", linking each repo bookmarked in the extension popup to its pull requests in static markup with avatars kept in localStorage (the links under Home and Feed show their user's or org's avatar too), so it renders at first paint, and swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too.
 ;(() => {
   const ICONS = {
-    book: '<path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/>',
-    "book-locked": '<path d="M12 6a3 3 0 0 1 3 3v1.168c.591.281 1 .884 1 1.582v2.5A1.75 1.75 0 0 1 14.25 16h-4.5A1.75 1.75 0 0 1 8 14.25v-2.5c0-.698.409-1.301 1-1.582V9a3 3 0 0 1 3-3Zm0 1.5A1.5 1.5 0 0 0 10.5 9v1h3V9A1.5 1.5 0 0 0 12 7.5Z"/><path d="M5.003 1c1.227 0 2.317.59 3.001 1.501A3.746 3.746 0 0 1 11.005 1h4.245a.75.75 0 0 1 .75.75V5.5a.75.75 0 0 1-1.5 0v-3h-3.495c-1.21 0-2.204.956-2.255 2.153V6.5a.75.75 0 0 1-1.5 0V4.69A2.249 2.249 0 0 0 5.003 2.5H1.5v9h3.758c.612 0 1.208.15 1.74.429l.005.001a.75.75 0 0 1-.705 1.324l-.001-.001v.002A2.245 2.245 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75V1.75A.75.75 0 0 1 .75 1h4.253Z"/>',
     "git-merge": '<path d="M5.45 5.154A4.25 4.25 0 0 0 9.25 7.5h1.378a2.251 2.251 0 1 1 0 1.5H9.25A5.734 5.734 0 0 1 5 7.123v3.505a2.25 2.25 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.95-.218ZM4.25 13.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm8.5-4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5ZM5 3.25a.75.75 0 1 0 0 .005V3.25Z"/>',
     inbox: '<path d="M2.8 2.06A1.75 1.75 0 0 1 4.41 1h7.18c.7 0 1.333.417 1.61 1.06l2.74 6.395c.04.093.06.194.06.295v4.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25v-4.5c0-.101.02-.202.06-.295Zm1.61.44a.25.25 0 0 0-.23.152L1.887 8H4.75a.75.75 0 0 1 .6.3L6.625 10h2.75l1.275-1.7a.75.75 0 0 1 .6-.3h2.863L11.82 2.652a.25.25 0 0 0-.23-.152Zm10.09 7h-2.875l-1.275 1.7a.75.75 0 0 1-.6.3h-3.5a.75.75 0 0 1-.6-.3L4.375 9.5H1.5v3.75c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25Z"/>',
     smiley: '<path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm3.82 1.636a.75.75 0 0 1 1.038.175l.007.009c.103.118.22.222.35.31.264.178.683.37 1.285.37.602 0 1.02-.192 1.285-.371.13-.088.247-.192.35-.31l.007-.008a.75.75 0 0 1 1.222.87l-.022-.015c.02.013.021.015.021.015v.001l-.001.002-.002.003-.005.007-.014.019a2.066 2.066 0 0 1-.184.213c-.16.166-.338.316-.53.445-.63.418-1.37.638-2.127.629-.946 0-1.652-.308-2.126-.63a3.331 3.331 0 0 1-.715-.657l-.014-.02-.005-.006-.002-.003v-.002h-.001l.613-.432-.614.43a.75.75 0 0 1 .183-1.044ZM12 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM5 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm5.25 2.25.592.416a97.71 97.71 0 0 0-.592-.416Z"/>',
@@ -10,6 +8,16 @@
   const AVATARS = "ujc-avatars"
   const avatarUrl = (owner) => `https://github.com/${owner}.png?size=32`
   const avatars = JSON.parse(localStorage.getItem(AVATARS) ?? "{}")
+  const linkOwner = (href) => {
+    const [first, second] = new URL(href, location.origin).pathname.split("/").filter(Boolean)
+    return first === "orgs" ? second : first
+  }
+  const avatar = (owner) => {
+    const img = document.createElement("img")
+    img.src = avatars[owner] ?? avatarUrl(owner)
+    img.alt = ""
+    return img
+  }
   const CONFIG = "github-enhanced-config"
   let config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
   const reserveNav = () => {
@@ -26,15 +34,13 @@
       const box = document.createElement("div")
       box.setAttribute("data-ujc-sections", "")
       const head = document.createElement("h2")
-      head.textContent = "Bookmarks"
+      head.textContent = "Pull Requests"
       const list = document.createElement("ul")
       for (const [repo, name] of Object.entries(config.bookmarks ?? {})) {
         const li = document.createElement("li")
         const a = document.createElement("a")
-        a.href = `/${repo}`
-        const img = document.createElement("img")
-        img.src = avatars[repo.split("/")[0]] ?? avatarUrl(repo.split("/")[0])
-        img.alt = ""
+        a.href = `/${repo}/pulls`
+        const img = avatar(repo.split("/")[0])
         const label = document.createElement("span")
         label.textContent = name
         a.append(img, label)
@@ -52,7 +58,7 @@
     if (!list || ![...list.querySelectorAll("a")].some((a) => a.textContent.trim() === "Feed")) return
     const template = [...list.children].find((li) => !li.hasAttribute("data-ujc-extra") && !li.classList.contains("ActionListItem--navActive"))
     if (!template?.querySelector(".ActionListItem-label")?.textContent.trim() || list.querySelector("[data-ujc-extra]")) return
-    for (const [href, [label, iconName]] of Object.entries(config.links ?? {})) {
+    for (const [href, label] of Object.entries(config.links ?? {})) {
       const li = template.cloneNode(true)
       li.setAttribute("data-ujc-extra", "")
       li.removeAttribute("data-item-id")
@@ -62,12 +68,8 @@
       a.removeAttribute("id")
       a.removeAttribute("aria-current")
       a.setAttribute("href", href)
-      li.querySelector(".ActionListItem-label").textContent = label
-      const icon = li.querySelector("svg")
-      if (icon) {
-        icon.setAttribute("class", `octicon octicon-${iconName}`)
-        icon.innerHTML = ICONS[iconName]
-      }
+      li.querySelector(".ActionListItem-label").textContent = [].concat(label)[0]
+      li.querySelector("svg")?.replaceWith(avatar(linkOwner(href)))
       list.append(li)
     }
   }
@@ -218,7 +220,8 @@
 
   const cacheAvatars = async () => {
     const next = {}
-    for (const owner of new Set(Object.keys(config.bookmarks ?? {}).map((repo) => repo.split("/")[0]))) {
+    const owners = [...Object.keys(config.bookmarks ?? {}).map((repo) => repo.split("/")[0]), ...Object.keys(config.links ?? {}).map(linkOwner)]
+    for (const owner of new Set(owners.filter(Boolean))) {
       const url = (await toDataUrl(avatarUrl(owner))) ?? avatars[owner]
       if (url) next[owner] = url
     }

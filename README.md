@@ -6,9 +6,9 @@ Flash-free tweaks for github.com, as a browser extension. Every tweak lands as t
 
 ### Dashboard sidebar
 
-Home and Feed side by side, your own links under them, a Bookmarks section above "Top repositories", and your avatar links to your profile.
+Home and Feed side by side, your own links under them, a Pull Requests section above "Top repositories" linking to your chosen repos' pull requests, and your avatar links to your profile.
 
-<img src="assets/dashboard.png" alt="Dashboard sidebar with Home and Feed side by side, two custom links and three bookmarks" width="330">
+<img src="assets/dashboard.png" alt="Dashboard sidebar with Home and Feed side by side, two custom links with their avatars and three repos under Pull Requests" width="330">
 
 ### Navbar
 
@@ -48,15 +48,15 @@ Click the extension's toolbar button, or its **Options**, to edit its config, on
     "nrjdalal/zerostarter": "ZeroStarter"
   },
   "links": {
-    "https://github.com/octocat?tab=repositories": ["Octocat", "book"]
+    "https://github.com/octocat?tab=repositories": "Octocat"
   }
 }
 ```
 
-- `bookmarks` maps `owner/repo` to the name shown in Bookmarks, in order.
-- `links` maps a URL to a row under Home and Feed as `[label, icon]`, the icon `book` or `book-locked`.
+- `bookmarks` maps `owner/repo` to the name shown under Pull Requests, in order; each links to the repo's pull requests.
+- `links` maps a URL to a row under Home and Feed with its label, shown with the avatar of the user or org the URL points to (`github.com/<user>` or `github.com/orgs/<org>`).
 
-The config syncs through your browser profile. Bookmark avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
+The config syncs through your browser profile. Avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
 
 ## Updates
 

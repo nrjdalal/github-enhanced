@@ -6,8 +6,8 @@ const TEMPLATE = `{
     // "nrjdalal/zerostarter": "ZeroStarter"
   },
   "links": {
-    // "URL": ["Label", "book" or "book-locked"],
-    // "https://github.com/octocat?tab=repositories": ["Octocat", "book"]
+    // "URL": "Label", shown with the avatar of the user or org in the URL
+    // "https://github.com/octocat?tab=repositories": "Octocat"
   }
 }`
 

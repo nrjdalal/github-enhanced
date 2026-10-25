@@ -54,7 +54,8 @@
   text-decoration: none;
 }
 
-[data-ujc-sections] img {
+[data-ujc-sections] img,
+[data-ujc-extra] img {
   flex-shrink: 0;
   width: 16px;
   height: 16px;
