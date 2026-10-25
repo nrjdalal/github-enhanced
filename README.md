@@ -52,6 +52,12 @@ Squash and merge fills its commit title with the pull request's title and number
 
 <img src="assets/squash-title.png" alt="Squash and merge form with the commit message set to the pull request title and number" width="560">
 
+### Tab to indent
+
+In any text box, such as a comment, an issue or a pull request description, Tab indents the line, or every selected line, by 2 spaces, and Shift+Tab takes 2 spaces off. Undo reverts an indent in one step. Press Esc first and Tab leaves the box as before, so keyboard navigation still works.
+
+<img src="assets/tab-indent.png" alt="A comment box with a nested list, its third item indented with Tab" width="680">
+
 ### Fold a file from its header
 
 On a pull request's Files changed tab, a click on any empty part of a file's header bar folds or opens that file, as the arrow at its left does. Buttons and links in the bar, the file name included, work as before.

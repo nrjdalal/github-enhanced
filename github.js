@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -31,6 +31,33 @@
     const label = (button) => (button.getAttribute("aria-label") ?? document.getElementById(button.getAttribute("aria-labelledby"))?.textContent ?? "").trim()
     ;[...header.querySelectorAll("button")].find((button) => /^(Collapse|Expand) file$/.test(label(button)))?.click()
   })
+  const escaped = new WeakSet()
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      const box = event.target
+      if (!(box instanceof HTMLTextAreaElement)) return
+      if (event.key === "Escape") return escaped.add(box)
+      if (event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey || escaped.has(box) || box.getAttribute("aria-expanded") === "true") return
+      event.preventDefault()
+      const { selectionStart, selectionEnd, value } = box
+      const start = value.lastIndexOf("\n", selectionStart - 1) + 1
+      const newline = value.indexOf("\n", selectionEnd - (selectionEnd > selectionStart && value[selectionEnd - 1] === "\n" ? 1 : 0))
+      const end = newline < 0 ? value.length : newline
+      const lines = value.slice(start, end).split("\n")
+      const changed = lines.map((line) => (event.shiftKey ? line.replace(/^ {1,2}/, "") : `  ${line}`))
+      const first = changed[0].length - lines[0].length
+      const total = changed.join("\n").length - (end - start)
+      if (!total) return
+      box.setSelectionRange(start, end)
+      document.execCommand("insertText", false, changed.join("\n"))
+      box.setSelectionRange(selectionStart === start && selectionEnd > selectionStart ? start : Math.max(start, selectionStart + first), Math.max(start, selectionEnd + total))
+    },
+    true,
+  )
+  document.addEventListener("input", (event) => escaped.delete(event.target), true)
+  document.addEventListener("focusout", (event) => escaped.delete(event.target), true)
+
   const VIEWED = "[class*='diff-file-header'] button:is([aria-label='Viewed'], [aria-label='Not Viewed'])"
   let lastViewed = -1
   document.addEventListener(
