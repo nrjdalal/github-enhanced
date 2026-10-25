@@ -38,7 +38,7 @@ It works in Chrome and other Chromium browsers, such as Helium, Arc, Brave and E
 
 ## Settings
 
-Click the extension's toolbar button, or its **Options**, to edit its config, one JSON object. Open github.com tabs update as soon as you save.
+Click the extension's toolbar button, or its **Options**, to edit its config, one JSON object; `//` comments are allowed and kept. An empty config starts with commented-out examples. Open github.com tabs update as soon as you save.
 
 <img src="assets/settings.png" alt="Settings with the config as JSON: bookmarks and links" width="512">
 

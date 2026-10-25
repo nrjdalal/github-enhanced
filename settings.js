@@ -1,15 +1,45 @@
 const field = document.getElementById("config")
 const status = document.getElementById("status")
-const EMPTY = { bookmarks: {}, links: {} }
+const TEMPLATE = `{
+  "bookmarks": {
+    // "owner/repo": "Name",
+    // "nrjdalal/zerostarter": "ZeroStarter"
+  },
+  "links": {
+    // "URL": ["Label", "book" or "book-locked"],
+    // "https://github.com/octocat?tab=repositories": ["Octocat", "book"]
+  }
+}`
 
-chrome.storage.sync.get("config", ({ config }) => {
-  field.value = JSON.stringify(config ?? EMPTY, null, 2)
+const parse = (text) => {
+  let out = ""
+  let quoted = false
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    if (quoted) {
+      out += char
+      if (char === "\\") out += text[++i] ?? ""
+      else if (char === '"') quoted = false
+    } else if (char === "/" && text[i + 1] === "/") {
+      while (i < text.length && text[i] !== "\n") i++
+      out += "\n"
+    } else {
+      if (char === '"') quoted = true
+      out += char
+    }
+  }
+  return JSON.parse(out.replace(/,(\s*[}\]])/g, "$1"))
+}
+
+chrome.storage.sync.get(["config", "text"], ({ config, text }) => {
+  const empty = !config || Object.values(config).every((value) => !value || !Object.keys(value).length)
+  field.value = text ?? (empty ? TEMPLATE : JSON.stringify(config, null, 2))
 })
 
 document.getElementById("save").addEventListener("click", async () => {
   let config
   try {
-    config = JSON.parse(field.value)
+    config = parse(field.value)
   } catch (error) {
     status.textContent = `Not valid JSON: ${error.message}`
     return
@@ -18,7 +48,6 @@ document.getElementById("save").addEventListener("click", async () => {
     status.textContent = "The config must be a JSON object."
     return
   }
-  await chrome.storage.sync.set({ config })
-  field.value = JSON.stringify(config, null, 2)
+  await chrome.storage.sync.set({ config, text: field.value })
   status.textContent = "Saved. Open tabs update right away."
 })
