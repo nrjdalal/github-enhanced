@@ -207,8 +207,8 @@ html[data-ujc-pending] h1[data-testid="header-title"] {
   visibility: hidden;
 }
 
-html[data-ujc-pending] aside li:has(> a[href*="/pulls/"]):not(:has(> a[href*="/pulls/assigned/"], > a[href*="/pulls/involves/"], > a[href*="/pulls/review-requested/"])) {
-  margin-bottom: var(--ujc-merged-row);
+html[data-ujc-pr-list] aside ul:not(:has(> li[data-ujc-merged])) > li:has(> a[href*="/pulls/"]):not(:has(> a[href*="/pulls/assigned/"], > a[href*="/pulls/involves/"], > a[href*="/pulls/review-requested/"])) {
+  margin-bottom: var(--ujc-merged-row, 64px);
 }
 
 aside ul:has(> li[data-ujc-active]) > li[data-active]:not([data-ujc-active]) {

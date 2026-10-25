@@ -307,38 +307,42 @@
     pending = true
   }
 
-  let merged
-  const prSidebar = (authoredHref, authoredActive, [label, icon, href, active]) => {
+  const extras = []
+  const prSidebar = (authoredHref, authoredActive, tabs) => {
     const authored = document.querySelector(`aside a[href='${authoredHref}']`)?.closest("li")
     if (!authored) return
-    if (!merged) {
-      merged = authored.cloneNode(true)
-      merged.setAttribute("data-ujc-merged", "")
-      const a = merged.querySelector("a")
-      merged.querySelector(`[id='${a.getAttribute("aria-labelledby")}']`)?.removeAttribute("id")
+    tabs.forEach(([label, icon, href], i) => {
+      if (extras[i]) return
+      const li = authored.cloneNode(true)
+      li.setAttribute("data-ujc-merged", "")
+      const a = li.querySelector("a")
+      li.querySelector(`[id='${a.getAttribute("aria-labelledby")}']`)?.removeAttribute("id")
       a.removeAttribute("id")
       a.removeAttribute("aria-labelledby")
       a.href = href
-      const svg = merged.querySelector("svg")
+      const svg = li.querySelector("svg")
       svg.setAttribute("class", `octicon octicon-${icon}`)
       svg.innerHTML = ICONS[icon]
-      const walker = document.createTreeWalker(merged, NodeFilter.SHOW_TEXT)
+      const walker = document.createTreeWalker(li, NodeFilter.SHOW_TEXT)
       while (walker.nextNode()) if (walker.currentNode.nodeValue.trim() === "Authored by me") walker.currentNode.nodeValue = label
-    }
+      extras[i] = li
+    })
     if (hydrated(authored)) {
-      if (authored.nextElementSibling !== merged) {
-        merged.style.cssText = ""
-        authored.after(merged)
+      if (authored.nextElementSibling !== extras[0] || extras.some((li, i) => i && li.previousElementSibling !== extras[i - 1])) {
+        for (const li of extras) li.style.cssText = ""
+        authored.after(...extras)
       }
     } else {
       const { bottom, left, width } = authored.getBoundingClientRect()
-      overlay(merged, bottom, left)
-      merged.style.width = `${width}px`
-      merged.style.listStyle = "none"
-      document.documentElement.style.setProperty("--ujc-merged-row", `${authored.offsetHeight}px`)
+      extras.forEach((li, i) => {
+        overlay(li, bottom + i * authored.offsetHeight, left)
+        li.style.width = `${width}px`
+        li.style.listStyle = "none"
+      })
+      document.documentElement.style.setProperty("--ujc-merged-row", `${extras.length * authored.offsetHeight}px`)
     }
-    merged.querySelector("a").setAttribute("aria-current", active ? "page" : "false")
-    for (const [li, on] of [[authored, authoredActive], [merged, active]]) {
+    for (const [li, on] of [[authored, authoredActive], ...extras.map((li, i) => [li, tabs[i][3]])]) {
+      if (li !== authored) li.querySelector("a").setAttribute("aria-current", on ? "page" : "false")
       if (on) {
         li.setAttribute("data-active", "true")
         li.setAttribute("data-ujc-active", "")
@@ -353,7 +357,9 @@
   const prTabs = () => {
     const [, owner, repo, page, rest] = location.pathname.split("/")
     const login = document.querySelector("meta[name='user-login']")?.content
-    const title = page === "pulls" && login && (!rest || rest === login) && document.querySelector("h1[data-testid='header-title']")
+    const list = page === "pulls" && !!login && (!rest || rest === login)
+    document.documentElement.toggleAttribute("data-ujc-pr-list", list)
+    const title = list && document.querySelector("h1[data-testid='header-title']")
     if (!title) return
     const pulls = `/${owner}/${repo}/pulls`
     const q = terms(new URLSearchParams(location.search).get("q"))
@@ -363,7 +369,7 @@
       ["Merged by me", "git-merge", `${pulls}?q=${encodeURIComponent(`is:pr state:merged author:${login}`)}`, !rest && q === terms(`is:pr state:merged author:${login}`)],
       ["Reviewed 5/5", "verified", `${pulls}?q=${encodeURIComponent(`is:pr is:open sort:updated-desc ${REVIEWED}`)}`, !rest && q === terms(`is:pr is:open ${REVIEWED}`)],
     ]
-    prSidebar(`${pulls}/${login}`, tabs[1][3], tabs[2])
+    prSidebar(`${pulls}/${login}`, tabs[1][3], tabs.slice(2))
     if (!nav) {
       nav = document.createElement("nav")
       nav.setAttribute("data-ujc-pr-tabs", "")
