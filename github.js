@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repoTabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo set in the extension popup, linking to its pull requests) and All Repositories (each user or org set there, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, and folds or opens a changed file when its header bar is clicked anywhere but a button or link.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, and folds or opens a changed file when its header bar is clicked anywhere but a button or link.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -52,7 +52,7 @@
   let config = JSON.parse(localStorage.getItem(CONFIG) ?? "{}")
   const repoTabs = () => {
     document.getElementById("ujc-repo-tabs")?.remove()
-    const tabs = config.repoTabs ?? []
+    const tabs = config.repository?.tabs ?? []
     if (!tabs.length) return
     const nav = 'nav[aria-label="Repository"]'
     const style = document.createElement("style")
@@ -71,8 +71,8 @@
   const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
       if (partial.previousElementSibling?.hasAttribute("data-ujc-sections")) continue
-      const pulls = entries(config.pullRequests).map(([repo, label]) => [`/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])
-      const all = entries(config.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])
+      const pulls = entries(config.sidebar?.pullRequests).map(([repo, label]) => [`/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])
+      const all = entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])
       for (const [title, rows] of [["Pull Requests", pulls], ["All Repositories", all]]) {
         if (!rows.length) continue
         const box = document.createElement("div")
@@ -291,13 +291,13 @@
 
   const cacheAvatars = async () => {
     const next = {}
-    const owners = [...entries(config.pullRequests).map(([repo]) => repo.split("/")[0]), ...entries(config.allRepositories).map(([owner]) => owner)]
+    const owners = [...entries(config.sidebar?.pullRequests).map(([repo]) => repo.split("/")[0]), ...entries(config.sidebar?.allRepositories).map(([owner]) => owner)]
     for (const owner of new Set(owners.filter(Boolean))) {
       const url = (await toDataUrl(avatarUrl(owner))) ?? avatars[owner]
       if (url) next[owner] = url
     }
     localStorage.setItem(AVATARS, JSON.stringify(next))
-    const unknown = entries(config.allRepositories).map(([owner]) => owner).filter((owner) => !(owner in orgs))
+    const unknown = entries(config.sidebar?.allRepositories).map(([owner]) => owner).filter((owner) => !(owner in orgs))
     for (const owner of unknown) {
       const org = await fetch(`/orgs/${owner}/repositories`, { method: "HEAD" }).then((res) => res.ok, () => undefined)
       if (org !== undefined) orgs[owner] = org

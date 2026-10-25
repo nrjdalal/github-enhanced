@@ -18,7 +18,7 @@ The GitHub mark becomes a home button styled like the menu button.
 
 ### Repo tabs
 
-Off until you list tabs in `repoTabs`. The tabs you list stay in the bar, in your order; the rest move under More at every width. Here `repoTabs` is `["code", "actions", "issues", "pull-requests"]`.
+Off until you list tabs in `repository.tabs`. The tabs you list stay in the bar, in your order; the rest move under More at every width. Here `repository.tabs` is `["code", "actions", "issues", "pull-requests"]`.
 
 ![Repo tab bar with Code, Actions, Issues and Pull requests, and More on the right](assets/repo-tabs.png)
 
@@ -58,19 +58,23 @@ It works in Chrome and other Chromium browsers, such as Helium, Arc, Brave and E
 
 Click the extension's toolbar button, or its **Options**, to edit its config, one JSON object; `//` comments are allowed and kept. An empty config starts with commented-out examples. Open github.com tabs update as soon as you save.
 
-<img src="assets/settings.png" alt="Settings with the config as JSON: pullRequests, allRepositories and repoTabs" width="512">
+<img src="assets/settings.png" alt="Settings with the config as JSON: sidebar and repository" width="512">
 
 ```json
 {
-  "pullRequests": ["nrjdalal/zerostarter", { "vercel/next.js": "Next.js" }],
-  "allRepositories": ["octocat", { "github": "GitHub" }],
-  "repoTabs": ["code", "actions", "issues", "pull-requests"]
+  "sidebar": {
+    "pullRequests": ["nrjdalal/zerostarter", { "vercel/next.js": "Next.js" }],
+    "allRepositories": ["octocat", { "github": "GitHub" }]
+  },
+  "repository": {
+    "tabs": ["code", "actions", "issues", "pull-requests"]
+  }
 }
 ```
 
-- `pullRequests` lists `owner/repo`, in order; each links to the repo's pull requests and shows as the repo's name, or as the label you give it with `{ "owner/repo": "Label" }`.
-- `allRepositories` lists users and orgs, in order; each links to its repositories and shows as its name, or as the label you give it with `{ "name": "Label" }`. Whether a name is an org is learned once, from whether its `github.com/orgs/<name>` page exists, and kept in github.com's localStorage.
-- `repoTabs` lists the repo tabs kept in the bar, in order, by their ids: `code`, `issues`, `pull-requests`, `agents`, `discussions`, `actions`, `projects`, `wiki`, `security-and-quality`, `insights`, `settings`. Leave it out to keep GitHub's own tab bar.
+- `sidebar.pullRequests` lists `owner/repo`, in order; each links to the repo's pull requests and shows as the repo's name, or as the label you give it with `{ "owner/repo": "Label" }`.
+- `sidebar.allRepositories` lists users and orgs, in order; each links to its repositories and shows as its name, or as the label you give it with `{ "name": "Label" }`. Whether a name is an org is learned once, from whether its `github.com/orgs/<name>` page exists, and kept in github.com's localStorage.
+- `repository.tabs` lists the repo tabs kept in the bar, in order, by their ids: `code`, `issues`, `pull-requests`, `agents`, `discussions`, `actions`, `projects`, `wiki`, `security-and-quality`, `insights`, `settings`. Leave it out to keep GitHub's own tab bar.
 
 The config syncs through your browser profile. Avatars are kept in github.com's localStorage and refreshed after each dashboard load, so from the second visit on they paint with the page.
 
