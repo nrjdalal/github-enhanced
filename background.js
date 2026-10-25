@@ -1,10 +1,25 @@
-// An unpacked install reloads itself once its files change on disk, so a git pull in its folder is all an update takes; the files read at install or reload are the baseline. Each install or reload also moves a config from an older shape (top-level pullRequests, allRepositories and repoTabs, or bookmarks and links) into sidebar and repository.
-const FILES = ["manifest.json", "background.js", "bridge.js", "github.js", "github.css", "settings.html", "settings.js"]
-const read = () => Promise.all(FILES.map((file) => fetch(chrome.runtime.getURL(file)).then((res) => res.text()))).then((texts) => texts.join("\0"))
+// An unpacked install reloads itself once its files change on disk, so a git pull in its folder is all an update takes; the files read at install or reload are the baseline. Each install or reload also moves a config from an older shape (top-level pullRequests, allRepositories and repoTabs, or bookmarks and links) into sidebar and repository, then takes a config.jsonc in the folder as the config whenever that file's text has changed.
+importScripts("jsonc.js")
+const FILES = ["manifest.json", "background.js", "bridge.js", "github.js", "github.css", "jsonc.js", "settings.html", "settings.js", "config.jsonc"]
+const fileText = (file) => fetch(chrome.runtime.getURL(file)).then((res) => (res.ok ? res.text() : ""), () => "")
+const read = () => Promise.all(FILES.map(fileText)).then((texts) => texts.join("\0"))
+
+const importFile = async () => {
+  const text = await fileText("config.jsonc")
+  const { configFile } = await chrome.storage.local.get("configFile")
+  if (!text.trim() || text === configFile) return
+  await chrome.storage.sync.set({ config: JSON.stringify(parse(text)), text })
+  await chrome.storage.local.set({ configFile: text })
+}
 
 let ready = Promise.resolve()
 chrome.runtime.onInstalled.addListener(async () => {
   ready = read().then((files) => chrome.storage.local.set({ files }))
+  await migrate()
+  await importFile()
+})
+
+const migrate = async () => {
   const { config } = await chrome.storage.sync.get("config")
   if (typeof config !== "string") return
   const { bookmarks, links, pullRequests, allRepositories, repoTabs, ...rest } = JSON.parse(config)
@@ -20,7 +35,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   const repository = repoTabs ? { tabs: repoTabs } : undefined
   await chrome.storage.sync.remove("text")
   await chrome.storage.sync.set({ config: JSON.stringify({ sidebar, repository, ...rest }) })
-})
+}
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message !== "check-update") return

@@ -82,6 +82,8 @@ It works in Chrome and other Chromium browsers, such as Helium, Arc, Brave and E
 
 Click the extension's toolbar button, or its **Options**, to edit its config, one JSON object; `//` comments are allowed and kept. An empty config starts with commented-out examples. Open github.com tabs update as soon as you save.
 
+Or write it to `config.jsonc` in the extension's folder, which git ignores: with **Developer mode** on, the extension reloads, takes the file as its config and shows it under Options. It takes the file again only once its text changes, so edits saved under Options stay until then.
+
 <img src="assets/settings.png" alt="Settings with the config as JSON: sidebar and repository" width="512">
 
 ```json
