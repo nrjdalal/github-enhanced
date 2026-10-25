@@ -248,17 +248,21 @@ aside ul:has(> li[data-ujc-active]) > li[data-active]:not([data-ujc-active]) [cl
   transition: none !important;
 }
 
-.feed-main__universe:has([data-ujc-cache]) {
+html[data-ujc-shown] .feed-main__universe {
   border: 0 !important;
   border-radius: 0 !important;
   justify-content: normal !important;
   align-items: normal !important;
 }
 
-.feed-main__universe:has([data-ujc-cache]) main {
+html[data-ujc-shown] .feed-main__universe main {
   display: block !important;
 }
 
-.feed-main__universe:has([data-ujc-cache]) .feed-main__universe--spinner {
+html[data-ujc-shown] .feed-main__universe .feed-main__universe--spinner {
   display: none !important;
+}
+
+html[data-ujc-shown] .news > include-fragment {
+  margin: 0 !important;
 }

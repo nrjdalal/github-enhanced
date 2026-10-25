@@ -181,6 +181,7 @@
         live.style.width = `${live.offsetWidth}px`
         live.after(copy)
         live.setAttribute("data-ujc-loading", "")
+        document.documentElement.setAttribute("data-ujc-shown", "")
         progress(false)
         addEventListener("load", () => setTimeout(() => copy.isConnected && swap(copy, live), 5000))
         continue
