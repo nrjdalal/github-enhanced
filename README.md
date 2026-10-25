@@ -28,6 +28,12 @@ The "All pull requests" heading becomes three icon tabs with GitHub-style toolti
 
 <img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
+### Commit types
+
+In a repo's commit list and a pull request's Commits tab, a title that starts with a [Conventional Commits](https://www.conventionalcommits.org) type shows the type as a colored label and its scope as a gray outline: `fix(scripts): clean records` reads as **fix** (scripts) clean records. The types are build, chore, ci, docs, feat, fix, perf, refactor, revert, style and test; a `!` for a breaking change stays on the label. Any other title is left as it is.
+
+<img src="assets/commit-types.png" alt="Commit list with ci, fix, refactor, feat and build labels and gray scope outlines before each title" width="830">
+
 ### Pull request sidebar
 
 A box with nothing in it shows only its title: "No reviews", "No one assigned", "None yet" and "No milestone" are hidden, and so is Development's "Successfully merging this pull request may close these issues." while no issue is linked. Its gear still opens the box to fill it.

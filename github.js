@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -348,6 +348,56 @@
     input.dispatchEvent(new Event("input", { bubbles: true }))
   }
 
+  const TYPES = new Set(["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test"])
+  const TYPE = /^(\w+)(?:\(([^)]+)\))?(!)?:\s+/
+  const typeLabel = (title) => {
+    const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT, { acceptNode: (node) => (node.parentElement.closest("[data-ujc-type]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) })
+    const text = walker.nextNode()
+    const [prefix, type, scope, breaking] = text?.nodeValue.match(TYPE) ?? []
+    if (!prefix || !TYPES.has(type)) return
+    text.nodeValue = text.nodeValue.slice(prefix.length)
+    if (title.querySelector("[data-ujc-type]")) return
+    const label = document.createElement("span")
+    label.setAttribute("data-ujc-type", type)
+    label.textContent = type + (breaking ?? "")
+    const labels = [label]
+    if (scope) {
+      const outline = document.createElement("span")
+      outline.setAttribute("data-ujc-type", "")
+      outline.textContent = scope
+      labels.push(outline)
+    }
+    title.prepend(...labels)
+  }
+  const covers = new Map()
+  const commitTypes = () => {
+    for (const [title, cover] of covers) {
+      if (title.isConnected && !hydrated(title)) continue
+      cover.remove()
+      covers.delete(title)
+      title.removeAttribute("data-ujc-covered")
+    }
+    for (const title of document.querySelectorAll("h4:has(a[href*='/commit/'], a[href*='/changes/'])")) {
+      if (title.hasAttribute("data-ujc-cover")) continue
+      if (hydrated(title)) {
+        typeLabel(title)
+        continue
+      }
+      let cover = covers.get(title)
+      if (!cover) {
+        cover = title.cloneNode(true)
+        cover.setAttribute("data-ujc-cover", "")
+        typeLabel(cover)
+        covers.set(title, cover)
+        title.setAttribute("data-ujc-covered", "")
+      }
+      const { top, left, width } = title.getBoundingClientRect()
+      const { font, color } = getComputedStyle(title)
+      overlay(cover, top, left)
+      Object.assign(cover.style, { width: `${width}px`, font, color })
+    }
+  }
+
   const linkAvatar = () => {
     for (const img of document.querySelectorAll("img.avatar")) {
       if (img.closest("a") || !img.parentElement.querySelector("select-panel[id^='switch_dashboard_context']")) continue
@@ -370,6 +420,7 @@
       squashTitle()
     }
     pending = false
+    if (/^\/[^/]+\/[^/]+\/(commits|pull\/\d+\/commits)(\/|$)/.test(location.pathname)) commitTypes()
     prTabs()
     document.documentElement.toggleAttribute("data-ujc-pending", pending)
     if (pending) schedule()
