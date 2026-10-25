@@ -1,10 +1,15 @@
-// Copies the settings from the extension's storage into github.com's localStorage, where github.js reads them synchronously as the page starts.
+// Copies the config from the extension's storage into github.com's localStorage, where github.js reads it synchronously as the page starts; a fresh install with no config adopts the one this browser last used on github.com.
+const KEY = "github-enhanced-config"
 const sync = (config) => {
   const next = JSON.stringify(config ?? {})
-  if (localStorage.getItem("github-enhanced-config") === next) return
-  localStorage.setItem("github-enhanced-config", next)
+  if (localStorage.getItem(KEY) === next) return
+  localStorage.setItem(KEY, next)
   document.dispatchEvent(new Event("github-enhanced:config"))
 }
-chrome.storage.sync.get("config", ({ config }) => sync(config))
+chrome.storage.sync.get("config", ({ config }) => {
+  const saved = localStorage.getItem(KEY)
+  if (config === undefined && saved) chrome.storage.sync.set({ config: JSON.parse(saved) })
+  else sync(config)
+})
 chrome.storage.onChanged.addListener((changes) => changes.config && sync(changes.config.newValue))
 chrome.runtime.sendMessage("check-update")
