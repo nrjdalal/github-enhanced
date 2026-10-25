@@ -32,8 +32,9 @@ const parse = (text) => {
 }
 
 chrome.storage.sync.get(["config", "text"], ({ config, text }) => {
-  const empty = !config || Object.values(config).every((value) => !value || !Object.keys(value).length)
-  field.value = text ?? (empty ? TEMPLATE : JSON.stringify(config, null, 2))
+  const parsed = typeof config === "string" ? JSON.parse(config) : {}
+  const empty = Object.values(parsed).every((value) => !value || !Object.keys(value).length)
+  field.value = text ?? (empty ? TEMPLATE : JSON.stringify(parsed, null, 2))
 })
 
 document.getElementById("save").addEventListener("click", async () => {
@@ -48,6 +49,6 @@ document.getElementById("save").addEventListener("click", async () => {
     status.textContent = "The config must be a JSON object."
     return
   }
-  await chrome.storage.sync.set({ config, text: field.value })
+  await chrome.storage.sync.set({ config: JSON.stringify(config), text: field.value })
   status.textContent = "Saved. Open tabs update right away."
 })
