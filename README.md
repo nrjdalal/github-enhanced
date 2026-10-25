@@ -24,7 +24,7 @@ Off until you list tabs in `repository.tabs`. The tabs you list stay in the bar,
 
 ### Pull requests page
 
-The "All pull requests" heading becomes four icon tabs with GitHub-style tooltips: Pull requests, Authored by me (your open pull requests), Merged by me (your pull requests that were merged) and Reviewed 5/5 (open pull requests labelled `Review • 5/5`). Merged by me and Reviewed 5/5 also join the page's sidebar under Authored by me. They read your username from the page, so they show only when you are signed in. A repo's pull request lists open sorted by last update, so a pull request with a new comment or push comes first; a search that names its own `sort:` keeps it.
+The "All pull requests" heading becomes four icon tabs with GitHub-style tooltips: Pull requests, Authored by me (your open pull requests), Merged by me (your pull requests that were merged) and Review • 5/5 (open pull requests labelled `Review • 5/5`). Merged by me and Review • 5/5 also join the page's sidebar under Authored by me. They read your username from the page, so they show only when you are signed in. A repo's pull request lists open sorted by last update, so a pull request with a new comment or push comes first; a search that names its own `sort:` keeps it.
 
 <img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
