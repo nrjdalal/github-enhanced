@@ -227,6 +227,38 @@ aside ul:has(> li[data-ujc-active]) > li[data-active]:not([data-ujc-active]) [cl
   display: none !important;
 }
 
-react-partial[data-ujc-loading] {
+[data-ujc-loading] {
+  position: absolute !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+[data-ujc-progress] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  height: 2px;
+  background: var(--bgColor-accent-emphasis, #1f6feb);
+}
+
+[data-ujc-cache],
+[data-ujc-cache] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.feed-main__universe:has([data-ujc-cache]) {
+  border: 0 !important;
+  border-radius: 0 !important;
+  justify-content: normal !important;
+  align-items: normal !important;
+}
+
+.feed-main__universe:has([data-ujc-cache]) main {
+  display: block !important;
+}
+
+.feed-main__universe:has([data-ujc-cache]) .feed-main__universe--spinner {
   display: none !important;
 }

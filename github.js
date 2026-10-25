@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows "Top repositories" from the last visit until GitHub's list loads, then animates rows that moved, came or went, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -115,20 +115,43 @@
     }
   }
 
-  const TOP = "ujc-top-repos"
+  const SKELETON = "[class*='keleton'], [aria-busy='true']"
   const repoRows = (el) => [...el.querySelectorAll("li[data-component='ActionList.Item']")].filter((li) => li.querySelector(":scope > a[href]"))
-  const rowKey = (li) => li.querySelector(":scope > a").getAttribute("href")
-  let topSaved = false
-  const swapTop = (cache, partial) => {
-    const cached = repoRows(cache)
+  const reactRoot = (name) => document.querySelector(`react-partial[partial-name='${name}'] [data-target='react-partial.reactRoot']`)
+  const REGIONS = [
+    ["copilot", () => reactRoot("copilot-chat-input-partial"), (root) => root.querySelector("textarea")],
+    ["lists", () => reactRoot("dashboard-lists"), (root) => root.querySelector("li a[href]") && !root.querySelector(SKELETON)],
+    ["repositories", () => reactRoot("dashboard-repositories"), (root) => repoRows(root).length],
+    ["changelog", () => document.querySelector("aside.feed-right-column"), (root) => !root.querySelector("include-fragment") && root.querySelector(".dashboard-changelog a")],
+  ]
+  const CACHE = "ujc-dashboard-"
+  const saved = new Set()
+  const rows = (el) => [...el.querySelectorAll("li")].filter((li) => !li.querySelector("li") && li.querySelector("a[href]"))
+  const rowKey = (li) => li.querySelector("a[href]").getAttribute("href")
+  const motion = { duration: 300, easing: "ease-out" }
+  let bar
+  const progress = (done) => {
+    if (!bar && !done) {
+      bar = document.createElement("div")
+      bar.setAttribute("data-ujc-progress", "")
+      document.documentElement.append(bar)
+      bar.animate([{ width: "0%" }, { width: "80%" }], { duration: 1500, easing: "ease-out", fill: "forwards" })
+    } else if (bar && done) {
+      const line = bar
+      bar = undefined
+      line.animate([{ width: getComputedStyle(line).width, opacity: 1 }, { width: "100%", opacity: 1, offset: 0.6 }, { width: "100%", opacity: 0 }], { duration: 500, easing: "ease-out", fill: "forwards" }).finished.then(() => line.remove())
+    }
+  }
+  const swap = (node, live) => {
+    const cached = rows(node)
     const before = new Map(cached.map((li) => [rowKey(li), li.getBoundingClientRect().top]))
-    partial.removeAttribute("data-ujc-loading")
-    const live = repoRows(partial)
-    const keys = new Set(live.map(rowKey))
+    live.removeAttribute("data-ujc-loading")
+    live.style.removeProperty("width")
+    const fresh = rows(live)
+    const keys = new Set(fresh.map(rowKey))
     const leaving = cached.filter((li) => !keys.has(rowKey(li))).map((li) => [li, li.getBoundingClientRect()])
-    cache.remove()
-    const motion = { duration: 300, easing: "ease-out" }
-    for (const li of live) {
+    node.remove()
+    for (const li of fresh) {
       const from = before.get(rowKey(li))
       const top = li.getBoundingClientRect().top
       if (from === undefined) li.animate([{ opacity: 0 }, { opacity: 1 }], motion)
@@ -139,29 +162,35 @@
       document.body.append(li)
       li.animate([{ opacity: 1 }, { opacity: 0 }], motion).finished.then(() => li.remove())
     }
+    if (!document.querySelector("[data-ujc-cache]")) progress(true)
   }
-  const topRepos = () => {
-    const partial = document.querySelector("react-partial[partial-name='dashboard-repositories']")
-    const root = partial?.querySelector("[data-target='react-partial.reactRoot']")
-    if (!root) return
-    const cache = document.querySelector("[data-ujc-top]")
-    if (!repoRows(root).length) {
-      const html = localStorage.getItem(TOP)
-      if (cache || topSaved || !html) return
-      const node = document.createElement("div")
-      node.setAttribute("data-ujc-top", "")
-      node.innerHTML = html
-      for (const el of node.querySelectorAll("[id]")) el.removeAttribute("id")
-      partial.after(node)
-      partial.setAttribute("data-ujc-loading", "")
-      addEventListener("load", () => setTimeout(() => node.isConnected && swapTop(node, partial), 5000))
-      return
+  const dashboard = () => {
+    for (const [key, find, ready] of REGIONS) {
+      const root = find()
+      if (!root) continue
+      const live = root.closest("react-partial") ?? root
+      const node = document.querySelector(`[data-ujc-cache='${key}']`)
+      if (!ready(root)) {
+        const html = localStorage.getItem(CACHE + key)
+        if (node || saved.has(key) || !html) continue
+        const copy = document.createElement(live.tagName === "ASIDE" ? "aside" : "div")
+        copy.className = live.className
+        copy.setAttribute("data-ujc-cache", key)
+        copy.innerHTML = html
+        for (const el of copy.querySelectorAll("[id]")) el.removeAttribute("id")
+        live.style.width = `${live.offsetWidth}px`
+        live.after(copy)
+        live.setAttribute("data-ujc-loading", "")
+        progress(false)
+        addEventListener("load", () => setTimeout(() => copy.isConnected && swap(copy, live), 5000))
+        continue
+      }
+      if (!saved.has(key)) {
+        saved.add(key)
+        localStorage.setItem(CACHE + key, root.innerHTML)
+      }
+      if (node) swap(node, live)
     }
-    if (!topSaved) {
-      topSaved = true
-      localStorage.setItem(TOP, root.innerHTML)
-    }
-    if (cache) swapTop(cache, partial)
   }
 
   const terms = (q) => (q ?? "").trim().split(/\s+/).filter((term) => term && !term.startsWith("sort:")).sort().join(" ")
@@ -322,7 +351,7 @@
     if (location.pathname === "/") {
       linkAvatar()
       sections()
-      topRepos()
+      dashboard()
     }
     if (/^\/[^/]+\/[^/]+\/pull\/\d+/.test(location.pathname)) {
       emptySidebar()
