@@ -28,6 +28,12 @@ The "All pull requests" heading becomes three icon tabs with GitHub-style toolti
 
 <img src="assets/pull-requests.png" alt="Pull requests page with three icon tabs, the Merged by me tooltip, and Merged by me in the sidebar" width="660">
 
+### Dates
+
+Every relative time ("16 hours ago", "yesterday") shows its date and time in your time zone, such as "Oct 25, 4:27 AM", with the year when it is not this year. Hovering still shows the full date. Durations, such as a workflow run's "3m 20s", stay as they are.
+
+<img src="assets/dates.png" alt="Commit list with each commit's time shown as a date and time, such as Oct 25, 4:27 AM" width="680">
+
 ### Commit types
 
 In a repo's commit list and a pull request's Commits tab, a title that starts with a [Conventional Commits](https://www.conventionalcommits.org) type shows the type as a colored label and its scope as a gray outline: `fix(scripts): clean records` reads as **fix** (scripts) clean records. The types are build, chore, ci, docs, feat, fix, perf, refactor, revert, style and test; a `!` for a breaking change stays on the label. Any other title is left as it is.

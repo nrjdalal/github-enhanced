@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above the dashboard's "Top repositories", in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me and Merged by me icon tabs, adding Merged by me to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, shows every relative time as its date and time, shows a commit title's Conventional Commits type as a colored label and its scope as an outline in commit lists, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -398,6 +398,13 @@
     }
   }
 
+  const DATE = { format: "datetime", weekday: "", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", prefix: "" }
+  const absoluteDates = () => {
+    for (const time of document.querySelectorAll("relative-time:is(:not([format]), [format='auto'], [format='relative'])")) {
+      for (const [name, value] of Object.entries(DATE)) time.setAttribute(name, value)
+    }
+  }
+
   const linkAvatar = () => {
     for (const img of document.querySelectorAll("img.avatar")) {
       if (img.closest("a") || !img.parentElement.querySelector("select-panel[id^='switch_dashboard_context']")) continue
@@ -420,6 +427,7 @@
       squashTitle()
     }
     pending = false
+    absoluteDates()
     if (/^\/[^/]+\/[^/]+\/(commits|pull\/\d+\/commits)(\/|$)/.test(location.pathname)) commitTypes()
     prTabs()
     document.documentElement.toggleAttribute("data-ujc-pending", pending)
