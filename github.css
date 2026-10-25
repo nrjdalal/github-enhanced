@@ -333,3 +333,7 @@ h1 [data-ujc-type] {
 [data-ujc-covered] {
   visibility: hidden;
 }
+
+[data-component="Flash"]:has(a[href*="/compare/"]):has(a:is([href$="/tree/canary"], [href$="/tree/dev"], [href$="/tree/develop"], [href$="/tree/main"], [href$="/tree/master"], [href$="/tree/prod"], [href$="/tree/production"], [href$="/tree/staging"])) {
+  display: none !important;
+}
