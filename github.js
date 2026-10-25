@@ -509,6 +509,13 @@
     cover.style.setProperty("margin-inline-start", `${-shift}px`)
   }
 
+  const BASES = /\/tree\/(canary|dev|develop|main|master|prod|production|staging)$/
+  const recentPushes = () => {
+    for (const flash of document.querySelectorAll("[data-component='Flash']:not([data-ujc-base]):has(a[href*='/compare/'])")) {
+      if ([...flash.querySelectorAll("a[href*='/tree/']")].some((a) => BASES.test(a.getAttribute("href")))) flash.setAttribute("data-ujc-base", "")
+    }
+  }
+
   const DATE = { format: "datetime", weekday: "", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", prefix: "" }
   const absoluteDates = () => {
     for (const time of document.querySelectorAll("relative-time:is(:not([format]), [format='auto'], [format='relative'])")) {
@@ -540,6 +547,7 @@
     }
     pending = false
     absoluteDates()
+    recentPushes()
     if (/^(\/[^/]+\/[^/]+)?\/(commits|pulls?)(\/|$)/.test(location.pathname)) commitTypes()
     prTabs()
     drawerSections()
