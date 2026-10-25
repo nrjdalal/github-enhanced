@@ -446,6 +446,7 @@
   const DATE = { format: "datetime", weekday: "", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", prefix: "" }
   const absoluteDates = () => {
     for (const time of document.querySelectorAll("relative-time:is(:not([format]), [format='auto'], [format='relative'])")) {
+      if (Date.now() - Date.parse(time.getAttribute("datetime")) < 1.5 * 864e5) continue
       for (const [name, value] of Object.entries(DATE)) time.setAttribute(name, value)
     }
   }

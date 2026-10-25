@@ -30,9 +30,9 @@ The "All pull requests" heading becomes three icon tabs with GitHub-style toolti
 
 ### Dates
 
-Every relative time ("16 hours ago", "yesterday") shows its date and time in your time zone, such as "Oct 25, 4:27 AM", with the year when it is not this year. Hovering still shows the full date. Durations, such as a workflow run's "3m 20s", stay as they are.
+A time from the last 36 hours stays relative, such as "just now", "3 minutes ago" or "yesterday". An older one shows its date and time in your time zone, such as "Oct 22, 4:27 AM", with the year when it is not this year. Hovering still shows the full date. Durations, such as a workflow run's "3m 20s", stay as they are.
 
-<img src="assets/dates.png" alt="Commit list with each commit's time shown as a date and time, such as Oct 25, 4:27 AM" width="680">
+<img src="assets/dates.png" alt="Commit list where the newest commits read yesterday and older ones show a date and time, such as Oct 24, 8:30 AM" width="640">
 
 ### Commit types
 
