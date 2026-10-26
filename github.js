@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me, Merged by me and Review • 5/5 icon tabs, adding Merged by me and Review • 5/5 to its sidebar too, with the Pull Requests repos at its bottom, opens a repo's pull request lists sorted by last update unless the search names a sort, adds a copy URL button after an Actions run's title, hides the recent pushes banner for a base branch such as main, staging or canary, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me, Merged by me and Review • 5/5 icon tabs, adding Merged by me and Review • 5/5 to its sidebar too, with the Pull Requests repos at its bottom, opens a repo's pull request lists sorted by last update unless the search names a sort, adds a copy URL button after an Actions run's title, hides the recent pushes banner for a base branch such as main, staging or canary, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline (a ticket key uppercased, and a link when tickets names its project) in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -365,10 +365,9 @@
     const group = last.cloneNode(false)
     group.setAttribute("data-ujc-pr-repos", "")
     group.setAttribute("aria-label", "Pull Requests")
-    const head = document.createElement("h3")
-    head.textContent = "Pull Requests"
+    const here = location.pathname.split("/").slice(0, 4).join("/")
     const list = item.parentElement.cloneNode(false)
-    for (const [href, text, owner] of rows) {
+    for (const [href, text, owner] of rows.filter(([href]) => href !== here)) {
       const li = item.cloneNode(true)
       li.removeAttribute("data-active")
       const a = li.querySelector("a")
@@ -380,7 +379,7 @@
       li.querySelector("[data-component='ActionList.LeadingVisual']")?.replaceChildren(avatar(owner))
       list.append(li)
     }
-    group.append(head, list)
+    group.append(list)
     last.after(hr, group)
   }
 
@@ -490,12 +489,21 @@
       labels.push(label)
     }
     if (scope) {
-      const outline = document.createElement("span")
-      outline.setAttribute("data-ujc-type", "")
-      outline.textContent = scope
-      labels.push(outline)
+      const parts = scope.split(/,\s*/)
+      labels.push(...(parts.every((part) => KEY.test(part)) ? parts : [scope]).map(outline))
     }
     title.prepend(...labels)
+  }
+  const KEY = /^([a-z][a-z0-9]*)-(\d+)$/i
+  const outline = (scope) => {
+    const [, project, n] = scope.match(KEY) ?? []
+    const key = project && `${project.toUpperCase()}-${n}`
+    const url = key && config.tickets?.[project.toUpperCase()]
+    const label = document.createElement(url ? "a" : "span")
+    label.setAttribute("data-ujc-type", "")
+    label.textContent = key ?? scope
+    if (url) label.href = url.replaceAll("{key}", key).replaceAll("{n}", n)
+    return label
   }
   const TITLES = [
     "h4:has(a[href*='/commit/'], a[href*='/commits/'], a[href*='/changes/'])",

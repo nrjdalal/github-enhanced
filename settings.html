@@ -48,7 +48,7 @@
   </head>
   <body>
     <h1>GitHub Enhanced</h1>
-    <small>JSON with <code>//</code> comments. <code>sidebar</code> holds the dashboard's <code>pullRequests</code> (<code>owner/repo</code>) and <code>allRepositories</code> (users and orgs), each as a name or <code>{ "name": "Label" }</code>; <code>repository.tabs</code> lists the repo tabs kept in the bar.</small>
+    <small>JSON with <code>//</code> comments. <code>sidebar</code> holds the dashboard's <code>pullRequests</code> (<code>owner/repo</code>) and <code>allRepositories</code> (users and orgs), each as a name or <code>{ "name": "Label" }</code>; <code>repository.tabs</code> lists the repo tabs kept in the bar; <code>tickets</code> maps a ticket key's project to a URL, with <code>{key}</code> or <code>{n}</code> in it.</small>
     <textarea id="config" spellcheck="false" aria-label="Config (JSON)"></textarea>
     <button id="save">Save</button><output id="status"></output>
     <script src="jsonc.js"></script>

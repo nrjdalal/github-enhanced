@@ -296,6 +296,15 @@ h1 [data-ujc-type] {
   font-weight: 400;
 }
 
+a[data-ujc-type=""] {
+  text-decoration: none;
+}
+
+a[data-ujc-type=""]:hover {
+  border-color: var(--fgColor-accent);
+  color: var(--fgColor-accent);
+}
+
 [data-ujc-type="build"],
 [data-ujc-type="ci"] {
   background: var(--bgColor-done-emphasis);
@@ -374,14 +383,6 @@ relative-time[data-ujc-text]:not(:defined)::before {
 
 [data-ujc-copy] .octicon-check {
   color: var(--fgColor-success);
-}
-
-nav[data-ujc-pr-repos] h3 {
-  margin: 0;
-  padding: 6px 8px;
-  color: var(--fgColor-muted);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 nav[data-ujc-pr-repos] img {

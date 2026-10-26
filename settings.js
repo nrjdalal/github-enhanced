@@ -18,6 +18,11 @@ const TEMPLATE = `{
       // tabs kept in a repo's bar, in order; the rest move under More
       // "code", "issues", "pull-requests", "actions"
     ]
+  },
+  "tickets": {
+    // a ticket key's project, and the URL its outline links to: {key} is PROJ-123, {n} is 123
+    // "PROJ": "https://linear.app/your-team/issue/{key}",
+    // "GH": "https://github.com/owner/repo/issues/{n}"
   }
 }`
 
