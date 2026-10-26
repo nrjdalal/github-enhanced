@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me, Merged by me and Review • 5/5 icon tabs, adding Merged by me and Review • 5/5 to its sidebar too, opens a repo's pull request lists sorted by last update unless the search names a sort, adds a copy URL button after an Actions run's title, hides the recent pushes banner for a base branch such as main, staging or canary, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me, Merged by me and Review • 5/5 icon tabs, adding Merged by me and Review • 5/5 to its sidebar too, with the Pull Requests repos at its bottom, opens a repo's pull request lists sorted by last update unless the search names a sort, adds a copy URL button after an Actions run's title, hides the recent pushes banner for a base branch such as main, staging or canary, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -325,6 +325,7 @@
       svg.innerHTML = ICONS[icon]
       const walker = document.createTreeWalker(li, NodeFilter.SHOW_TEXT)
       while (walker.nextNode()) if (walker.currentNode.nodeValue.trim() === "Authored by me") walker.currentNode.nodeValue = label
+      li.querySelector("[title]")?.setAttribute("title", label)
       extras[i] = li
     })
     if (hydrated(authored)) {
@@ -351,6 +352,36 @@
         li.removeAttribute("data-ujc-active")
       }
     }
+  }
+
+  const prRepos = () => {
+    const rows = sidebarRows().find(([title]) => title === "Pull Requests")?.[1]
+    const navs = document.querySelectorAll("aside[aria-label='Pull requests navigation'] nav[data-component='NavList']:not([data-ujc-pr-repos])")
+    const last = navs[navs.length - 1]
+    const item = last?.querySelector("li[data-component='ActionList.Item']")
+    if (!rows || navs.length < 2 || !item || !hydrated(last) || document.querySelector("nav[data-ujc-pr-repos]")) return
+    const hr = last.previousElementSibling?.tagName === "HR" ? last.previousElementSibling.cloneNode(true) : document.createElement("hr")
+    hr.setAttribute("data-ujc-pr-repos", "")
+    const group = last.cloneNode(false)
+    group.setAttribute("data-ujc-pr-repos", "")
+    group.setAttribute("aria-label", "Pull Requests")
+    const head = document.createElement("h3")
+    head.textContent = "Pull Requests"
+    const list = item.parentElement.cloneNode(false)
+    for (const [href, text, owner] of rows) {
+      const li = item.cloneNode(true)
+      li.removeAttribute("data-active")
+      const a = li.querySelector("a")
+      a.href = href
+      for (const attr of ["id", "aria-labelledby", "aria-current"]) a.removeAttribute(attr)
+      const label = li.querySelector("[data-component='ActionList.Item.Label']")
+      label.removeAttribute("id")
+      label.replaceChildren(text)
+      li.querySelector("[data-component='ActionList.LeadingVisual']")?.replaceChildren(avatar(owner))
+      list.append(li)
+    }
+    group.append(head, list)
+    last.after(hr, group)
   }
 
   let nav
@@ -585,6 +616,7 @@
     if (/^\/[^/]+\/[^/]+\/actions\/runs\/\d+/.test(location.pathname)) runCopy()
     if (/^(\/[^/]+\/[^/]+)?\/(commits|pulls?)(\/|$)/.test(location.pathname)) commitTypes()
     prTabs()
+    if (/^\/[^/]+\/[^/]+\/pulls(\/|$)/.test(location.pathname)) prRepos()
     drawerSections()
     document.documentElement.toggleAttribute("data-ujc-pending", pending)
     if (pending) schedule()

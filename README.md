@@ -6,7 +6,7 @@ Flash-free tweaks for github.com, as a browser extension. Every tweak lands as t
 
 ### Dashboard sidebar
 
-Home and Feed side by side, then two sections above "Top repositories": Pull Requests, linking to your chosen repos' pull requests, and All Repositories, linking to your chosen users' and orgs' repositories. The same two sections sit above "Top repositories" in the menu the ☰ button opens on every page. Your avatar links to your profile. The parts GitHub loads after the page (the Copilot box, Pull requests and Issues, "Top repositories" and the changelog) show as they were on your last visit at first paint, under a thin blue line across the top; when GitHub's own arrive, rows that moved slide to their place, new rows fade in, gone rows fade out, and the line runs to the right edge and fades.
+Home and Feed side by side, then two sections above "Top repositories": Pull Requests, linking to your chosen repos' pull requests, and All Repositories, linking to your chosen users' and orgs' repositories. The same two sections sit above "Top repositories" in the menu the ☰ button opens on every page. Pull Requests also sits at the bottom of a repo's pull request sidebar. Your avatar links to your profile. The parts GitHub loads after the page (the Copilot box, Pull requests and Issues, "Top repositories" and the changelog) show as they were on your last visit at first paint, under a thin blue line across the top; when GitHub's own arrive, rows that moved slide to their place, new rows fade in, gone rows fade out, and the line runs to the right edge and fades.
 
 <img src="assets/dashboard.png" alt="Dashboard sidebar with Home and Feed side by side, three repos under Pull Requests and a user and an org under All Repositories" width="330">
 

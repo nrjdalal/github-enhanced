@@ -7,6 +7,10 @@
   margin-bottom: 0;
 }
 
+[data-ujc-sections] + [data-ujc-sections] {
+  padding-top: 12px;
+}
+
 [data-ujc-sections] h2 {
   margin: 0;
   padding: 6px 16px;
@@ -370,4 +374,18 @@ relative-time[data-ujc-text]:not(:defined)::before {
 
 [data-ujc-copy] .octicon-check {
   color: var(--fgColor-success);
+}
+
+nav[data-ujc-pr-repos] h3 {
+  margin: 0;
+  padding: 6px 8px;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+nav[data-ujc-pr-repos] img {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
 }
