@@ -1,4 +1,4 @@
-// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its pull requests) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me, Merged by me and Review • 5/5 icon tabs, adding Merged by me and Review • 5/5 to its sidebar too, with the Pull Requests repos at its bottom, opens a repo's pull request lists sorted by last update unless the search names a sort, adds a copy URL button after an Actions run's title, hides the recent pushes banner for a base branch such as main, staging or canary, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline (a ticket key uppercased, and a link when tickets names its project) in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
+// Keeps a repo's tabs listed in repository.tabs in the bar, in that order, moving the rest under More; puts Home and Feed side by side, links the account avatar to its profile and adds Pull Requests (each repo in sidebar.pullRequests, linking to its Authored by me list, or to its pull requests when signed out) and All Repositories (each user or org in sidebar.allRepositories, linking to its repositories, an org found by whether its /orgs page exists) above "Top repositories" on the dashboard and in the ☰ menu, in static markup with avatars kept in localStorage, so they render at first paint, shows the Copilot box, Pull requests and Issues, Top repositories and the changelog from the last visit until GitHub's own load, then animates rows that moved, came or went under a blue progress line, swaps a repo's "All pull requests" heading for Pull requests, Authored by me, Merged by me and Review • 5/5 icon tabs, adding Merged by me and Review • 5/5 to its sidebar too, with the Pull Requests repos at its bottom, opens a repo's pull request lists sorted by last update unless the search names a sort, adds a copy URL button after an Actions run's title, hides the recent pushes banner for a base branch such as main, staging or canary, shows every relative time as its date and time, shows a commit or pull request title's Conventional Commits type as a colored label and its scope, or a leading ticket key, as an outline (a ticket key uppercased, and a link when tickets names its project) in commit lists, pull request lists and on a pull request, and on a pull request hides each sidebar box's "None yet" style line, keeping its title, fills Squash and merge's commit title with the pull request's title and number, indents a text box's line or selected lines on Tab and outdents them on Shift+Tab until Esc, folds or opens a changed file when its header bar is clicked anywhere but a button or link, and gives every file between the last Viewed click and a shift-clicked Viewed the same mark.
 ;(() => {
   const sortedUrl = (href) => {
     const url = new URL(href, location.href)
@@ -117,10 +117,13 @@
   repoTabs()
   const hydrated = (el) => Object.keys(el).some((key) => key.startsWith("__reactFiber$"))
 
-  const sidebarRows = () => [
-    ["Pull Requests", entries(config.sidebar?.pullRequests).map(([repo, label]) => [`/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])],
-    ["All Repositories", entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])],
-  ].filter(([, rows]) => rows.length)
+  const sidebarRows = () => {
+    const pulls = login() ? `/pulls/${login()}` : "/pulls"
+    return [
+      ["Pull Requests", entries(config.sidebar?.pullRequests).map(([repo, label]) => [`/${repo}${pulls}`, label ?? repo.split("/")[1], repo.split("/")[0]])],
+      ["All Repositories", entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])],
+    ].filter(([, rows]) => rows.length)
+  }
 
   const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
@@ -367,7 +370,7 @@
     group.setAttribute("aria-label", "Pull Requests")
     const here = location.pathname.split("/").slice(0, 4).join("/")
     const list = item.parentElement.cloneNode(false)
-    for (const [href, text, owner] of rows.filter(([href]) => href !== here)) {
+    for (const [href, text, owner] of rows.filter(([href]) => !`${href}/`.startsWith(`${here}/`))) {
       const li = item.cloneNode(true)
       li.removeAttribute("data-active")
       const a = li.querySelector("a")
