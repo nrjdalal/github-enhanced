@@ -117,13 +117,10 @@
   repoTabs()
   const hydrated = (el) => Object.keys(el).some((key) => key.startsWith("__reactFiber$"))
 
-  const sidebarRows = () => {
-    const pulls = login() ? `/pulls/${login()}` : "/pulls"
-    return [
-      ["Pull Requests", entries(config.sidebar?.pullRequests).map(([repo, label]) => [`/${repo}${pulls}`, label ?? repo.split("/")[1], repo.split("/")[0]])],
-      ["All Repositories", entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])],
-    ].filter(([, rows]) => rows.length)
-  }
+  const sidebarRows = () => [
+    ["Pull Requests", entries(config.sidebar?.pullRequests).map(([repo, label]) => [login() ? `/${repo}/pulls?q=${encodeURIComponent(`is:pr is:open author:${login()}`)}` : `/${repo}/pulls`, label ?? repo.split("/")[1], repo.split("/")[0]])],
+    ["All Repositories", entries(config.sidebar?.allRepositories).map(([owner, label]) => [orgs[owner] ? `/orgs/${owner}/repositories` : `/${owner}?tab=repositories`, label ?? owner, owner])],
+  ].filter(([, rows]) => rows.length)
 
   const sections = () => {
     for (const partial of document.querySelectorAll("react-partial[partial-name='dashboard-repositories']")) {
@@ -370,7 +367,7 @@
     group.setAttribute("aria-label", "Pull Requests")
     const here = location.pathname.split("/").slice(0, 4).join("/")
     const list = item.parentElement.cloneNode(false)
-    for (const [href, text, owner] of rows.filter(([href]) => !`${href}/`.startsWith(`${here}/`))) {
+    for (const [href, text, owner] of rows.filter(([href]) => href !== here)) {
       const li = item.cloneNode(true)
       li.removeAttribute("data-active")
       const a = li.querySelector("a")
