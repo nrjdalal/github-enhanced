@@ -502,7 +502,7 @@
     const label = document.createElement(url ? "a" : "span")
     label.setAttribute("data-ujc-type", "")
     label.textContent = key ?? scope
-    if (url) label.href = url.replaceAll("{key}", key).replaceAll("{n}", n)
+    if (url) Object.assign(label, { href: url.replaceAll("{key}", key).replaceAll("{n}", n), target: "_blank", rel: "noopener" })
     return label
   }
   const TITLES = [
